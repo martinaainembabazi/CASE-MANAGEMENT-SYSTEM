@@ -1,5 +1,4 @@
 using Template.Common.AuditColumn;
-using Template.Common.Enums;
 
 namespace Template.Data.Entities
 {
@@ -14,7 +13,6 @@ namespace Template.Data.Entities
 
     public required string Username { get; set; }
 
-    public AuditEventType EventType { get; set; }
     public required string OperationPerformed { get; set; }
 
     public string? SourceIP { get; set; }
@@ -28,8 +26,6 @@ namespace Template.Data.Entities
 
     public string? OldValues { get; set; }
     public string? NewValues { get; set; }
-
-    public AuditStatus Status { get; set; }
 
     public string? ErrorMessage { get; set; }
 

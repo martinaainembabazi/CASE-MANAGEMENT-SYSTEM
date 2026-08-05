@@ -30,14 +30,10 @@
 					{
 						<tr>
 							<td>@log.Username</td>
-							<td>@log.EventType</td>
 							<td>@log.OperationPerformed</td>
 							<td>@log.SourceIP</td>
 							<td>@log.AffectedEntityType (@log.AffectedEntityId)</td>
 							<td>
-								<span class="badge @(log.Status == Template.Common.Enums.AuditStatus.Success ? "bg-success" : "bg-danger")">
-									@log.Status
-								</span>
 							</td>
 							<td>@log.CreatedDate.ToString("dd MMM yyyy HH:mm:ss")</td>
 							<td>@log.ActionDetails</td>

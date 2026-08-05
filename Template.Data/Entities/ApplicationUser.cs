@@ -34,7 +34,5 @@ namespace Template.Data.Entities
 
     public DateTime? UpdatedDate { get; set; }
     public Guid? UpdatedBy { get; set; }
-
-  public ICollection<InnovationIdea> Ideas { get; set; } = new List<InnovationIdea>();
 }
 }
