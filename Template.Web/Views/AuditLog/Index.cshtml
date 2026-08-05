@@ -1,0 +1,74 @@
+@model IEnumerable<Template.Core.Models.AuditLogs.ApplicationAuditLogViewModel>
+
+@{
+    ViewData["title"] = "Audit Logs";
+    var permissions = ViewData["permissions"] as string;
+}
+
+
+	<div class="card">
+		<div class="card-status-top bg_app_color_burgundy"></div>
+		<div class="card-header d-flex justify-content-between align-items-center">
+			<h3 class="card-title">Audit Logs</h3>
+		</div>
+		<div class="card-body">
+			<table id="logs" class="table table-hover table-striped align-middle w-100">
+				<thead>
+					<tr>
+						<th>Username</th>
+						<th>Event Type</th>
+						<th>Operation</th>
+						<th>Source IP</th>
+						<th>Affected Entity</th>
+						<th>Status</th>
+						<th>Timestamp</th>
+						<th>Action Details</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var log in Model)
+					{
+						<tr>
+							<td>@log.Username</td>
+							<td>@log.EventType</td>
+							<td>@log.OperationPerformed</td>
+							<td>@log.SourceIP</td>
+							<td>@log.AffectedEntityType (@log.AffectedEntityId)</td>
+							<td>
+								<span class="badge @(log.Status == Template.Common.Enums.AuditStatus.Success ? "bg-success" : "bg-danger")">
+									@log.Status
+								</span>
+							</td>
+							<td>@log.CreatedDate.ToString("dd MMM yyyy HH:mm:ss")</td>
+							<td>@log.ActionDetails</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	@if (!Model.Any())
+	{
+		<div class="card-footer text-center text-muted">
+			<i class="ti ti-mood-empty me-2"></i> No logs found
+		</div>
+	}
+</div>
+
+@section Scripts {
+	<script src="https://cdn.datatables.net/buttons/3.2.2/js/dataTables.buttons.js"></script>
+	<script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.dataTables.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.html5.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.print.min.js"></script>
+	<script>
+		new DataTable('#logs', {
+			layout: {
+				topStart: {
+					buttons: ['csv', 'excel', 'pdf', 'print']
+				}
+			}
+		});
+	</script>
+}
+

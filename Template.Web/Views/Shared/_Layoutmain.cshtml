@@ -1,0 +1,196 @@
+﻿
+<!DOCTYPE html>
+<html lang="en" data-coreui-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Template.Web</title>
+    <link rel="stylesheet" href="~/css/font_awesome_all.min.css" asp-append-version="true" />
+    @* <link rel="stylesheet" href="~/css/bootstrap.min.css" asp-append-version="true" /> *@
+    <link rel="stylesheet" href="~/css/theme_styles.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Custom styles for this template -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/Template.Web.styles.css" asp-append-version="true" />
+    <style>
+
+        /* For Firefox */
+        /* #sidebarMenu {
+                            scrollbar-width: thin;
+                            border-radius: 4px;
+                            scrollbar-color: var(--app-color-dark-maroon) var(--app-color-crimson);
+                        } */
+        /*     #sidebarMenu {
+                            scrollbar-width: none;
+                            overflow: hidden;
+                                }
+                        #sidebarMenu::before {
+                            content: '';
+                            margin: 70px 0 0;
+                            height: 60%;
+                            position: absolute;
+                            max-height: 100vh;
+                            width: 5px;
+                            right: 0;
+                            top: 0;
+                            bottom: 0;
+                            background-color: var(--app-color-dark-maroon);
+                            border-radius: 4px;
+                            z-index: 1;
+                        }  */
+
+        
+
+        /* #sidebarMenu {
+            margin: 70px 0 0;
+        } */
+
+        .sidebar_container {
+            /* margin: 70px 0 0; */
+            /* padding: 48px 0 0; */
+            background-color: var(--app-color-crimson);
+        }
+
+    </style>
+</head>
+<body>
+    @* <header class="navbar navbar-light sticky-top bg-light flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 bg_app_color_crimson" href="#">
+            <img src="~/img/bou.png" width="40" height="32" />
+            Template
+        </a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
+                <a class="nav-link px-3" href="#">Sign out</a>
+            </div>
+        </div>
+    </header> *@
+
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="sidebar_container pt-3 col-md-3 col-lg-2">
+                <nav id="sidebarMenu" class=" col-md-3 col-lg-2 d-md-block bg-light sidebar collapse overflow-auto">
+                    <div class="position-sticky">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Home" asp-action="Index">
+                                    <div class="sidebar-brand-icon rotate-n-15">
+                                        <img src="~/img/bou.png" width="40" height="30"/>
+                                    </div>
+                                    <div class="sidebar-brand-text mx-3">BOU Template</div>
+                                </a>
+                                <hr class="sidebar-divider my-0">
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" aria-current="page" asp-controller="Home" asp-action="Index">
+                                    <i class="bi bi-house fs-5 me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseOrders" role="button" aria-expanded="false" aria-controls="collapseOrders">
+                                    <div class="d-flex align-items-center">
+                                        @* <i class="fas fa-file me-2"></i> <!-- Font Awesome file icon --> *@
+                                        <i class="bi bi-file-bar-graph-fill fs-5 me-2"></i>
+                                        <span>Orders</span>
+                                    </div>
+                                    <i class="fa-solid fa-angle-up angle-up-icon"></i>
+                                </a>
+                                <div class="collapse" id="collapseOrders">
+                                    <ul class="nav flex-column ms-3">
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#">Order 1</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#">Order 2</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#">Order 3</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                        </ul>
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-white-50">
+                            <span>Reports</span>
+                        </h6>
+
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseBudgetPrepReports" role="button" aria-expanded="false" aria-controls="collapseBudgetPrepReports">
+                                    <div class="d-flex align-items-center">
+                                        @* <i class="fas fa-file me-2"></i> <!-- Font Awesome file icon --> *@
+                                        <i class="bi bi-file-bar-graph-fill fs-5 me-2"></i>
+                                        <span>Budget Preparation Reports</span>
+                                    </div>
+                                    <i class="fa-solid fa-angle-up angle-up-icon"></i>
+                                </a>
+                                <div class="collapse" id="collapseBudgetPrepReports">
+                                    <ul class="nav flex-column ms-3">
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#">Order 1</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#">Order 2</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#">Order 3</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                        </ul>
+
+
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-white-50">
+                            <span>System Settings</span>
+                        </h6>
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <i class="bi bi-house fs-5 me-2"></i>
+                                    Accounts
+                                </a>
+                            </li>
+                        </ul>
+
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-white-50">
+                            <span>UI Kit</span>
+                        </h6>
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="UiKit">
+                                    <i class="bi bi-circle fs-6 me-2"></i>
+                                    UI Kit
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-3">
+                @RenderBody()
+
+            </main>
+
+
+        </div>
+    </div>
+    @* <div class="container">
+    <main role="main" class="pb-3">
+
+    </main>
+    </div> *@
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,35 @@
+@* @using Template.Web.Models.Shared
+@{
+    Layout = null;
+
+    var dashboardView = "~/Views/Shared/Components/StaffDashboard/Default.cshtml";
+    object dashboardModel = new StaffDashboardModel();
+
+    if (User.IsInRole("Admin"))
+    {
+        dashboardView = "~/Views/Shared/Components/AdminDashboard/Default.cshtml";
+        dashboardModel = new AdminDashboardModel();
+    }
+    else if (User.IsInRole("InnovationTeam"))
+    {
+        dashboardView = "~/Views/Shared/Components/InnovationTeamDashboard/Default.cshtml";
+        dashboardModel = new InnovationDashboardModel();
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Innovation Management Tracking System</title>
+    <link rel="stylesheet" href="~/css/tabler.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme_styles.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Template.Web.styles.css" asp-append-version="true" />
+</head>
+@await Html.PartialAsync(dashboardView, dashboardModel)
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>lucide.createIcons();</script>
+</html> *@
+
+<div>testing</div>

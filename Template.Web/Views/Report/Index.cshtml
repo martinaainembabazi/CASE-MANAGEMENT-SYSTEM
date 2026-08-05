@@ -1,0 +1,259 @@
+@page
+@model ReportsModel
+@{
+    ViewData["Title"] = "Reports - Innovation Management System";
+}
+
+<body class="ims-staff-dashboard">
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Report Filters -->
+            <div class="ims-staff-card">
+                <div class="ims-staff-section-header">
+                    <h3>Report Filters</h3>
+                </div>
+                <form method="post" asp-page-handler="GenerateReport">
+                    <div class="ims-staff-filters-bar ims-staff-report-filters">
+                        <div class="ims-staff-form-group">
+                            <label>Date Range</label>
+                            <div class="ims-staff-date-range">
+                                <input type="date" class="ims-staff-form-control" asp-for="Filters.StartDate">
+                                <span class="ims-staff-date-separator">to</span>
+                                <input type="date" class="ims-staff-form-control" asp-for="Filters.EndDate">
+                            </div>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label>Department</label>
+                            <select class="ims-staff-form-control" asp-for="Filters.Department">
+                                <option value="">All Departments</option>
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    <option value="@dept">@dept</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label>Category</label>
+                            <select class="ims-staff-form-control" asp-for="Filters.Category">
+                                <option value="">All Categories</option>
+                                @foreach (var cat in Model.Categories)
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label>Status</label>
+                            <select class="ims-staff-form-control" asp-for="Filters.Status">
+                                <option value="">All Statuses</option>
+                                <option value="Submitted">Submitted</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Declined">Declined</option>
+                            </select>
+                        </div>
+                        <div class="ims-staff-form-group ims-staff-filter-actions">
+                            <button type="submit" class="ims-staff-btn ims-staff-btn-primary ims-staff-generate-report-btn">Generate Report</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="ims-staff-two-col-grid">
+                <div class="ims-staff-card">
+                    <div class="ims-staff-section-header">
+                        <h3>Summary</h3>
+                    </div>
+                    <div class="ims-staff-summary-stats">
+                        <div class="ims-staff-stat-item">
+                            <div class="ims-staff-stat-label">Total Ideas</div>
+                            <div class="ims-staff-stat-value">@Model.ReportSummary.TotalIdeas</div>
+                        </div>
+                        <div class="ims-staff-stat-item">
+                            <div class="ims-staff-stat-label">Approved</div>
+                            <div class="ims-staff-stat-value ims-staff-stat-success">@Model.ReportSummary.Approved</div>
+                        </div>
+                        <div class="ims-staff-stat-item">
+                            <div class="ims-staff-stat-label">Under Review</div>
+                            <div class="ims-staff-stat-value ims-staff-stat-warning">@Model.ReportSummary.UnderReview</div>
+                        </div>
+                        <div class="ims-staff-stat-item">
+                            <div class="ims-staff-stat-label">Declined</div>
+                            <div class="ims-staff-stat-value ims-staff-stat-danger">@Model.ReportSummary.Declined</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ims-staff-card">
+                    <div class="ims-staff-section-header">
+                        <h3>Ideas by Category</h3>
+                    </div>
+                    <div class="ims-staff-chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Trend -->
+            <div class="ims-staff-card">
+                <div class="ims-staff-section-header">
+                    <h3>Monthly Submission Trend</h3>
+                </div>
+                <div class="ims-staff-chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Report -->
+            <div class="ims-staff-card ims-staff-table-card">
+                <div class="ims-staff-section-header">
+                    <h3>Detailed Report</h3>
+                    <div class="ims-staff-export-actions">
+                        <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary" onclick="exportReport('PDF')">Export PDF</button>
+                        <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary" onclick="exportReport('Excel')">Export Excel</button>
+                        <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary" onclick="exportReport('CSV')">Export CSV</button>
+                    </div>
+                </div>
+                <div class="ims-staff-table-container">
+                    <table class="ims-staff-data-table" id="reportTable">
+                        <thead>
+                            <tr>
+                                <th>Idea Title</th>
+                                <th>Submitter</th>
+                                <th>Department</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var idea in Model.ReportIdeas)
+                            {
+                                <tr>
+                                    <td>@idea.Title</td>
+                                    <td>@idea.Submitter</td>
+                                    <td>@idea.Department</td>
+                                    <td>@idea.Category</td>
+                                    <td>
+                                        <span class="ims-staff-badge ims-staff-badge-@idea.Status.Replace(" ", "-").ToLower()">
+                                            @idea.Status
+                                        </span>
+                                    </td>
+                                    <td>@idea.Date.ToString("dd MMM yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="ims-staff-pagination">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a asp-page="/Innovation/Reports" asp-route-page="@(Model.CurrentPage - 1)" class="ims-staff-pagination-link">&laquo; Previous</a>
+                        }
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <a asp-page="/Innovation/Reports" asp-route-page="@i" class="ims-staff-pagination-link @(i == Model.CurrentPage ? "ims-staff-pagination-active" : "")">@i</a>
+                        }
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a asp-page="/Innovation/Reports" asp-route-page="@(Model.CurrentPage + 1)" class="ims-staff-pagination-link">Next &raquo;</a>
+                        }
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script src="https://unpkg.com/chart.js@latest"></script>
+        <script>
+            lucide.createIcons();
+
+            // Chart data from server
+            const categoryLabels = @Html.Raw(Json.Serialize(Model.CategoryChartLabels));
+            const categoryData = @Html.Raw(Json.Serialize(Model.CategoryChartData));
+            const trendLabels = @Html.Raw(Json.Serialize(Model.TrendChartLabels));
+            const trendData = @Html.Raw(Json.Serialize(Model.TrendChartData));
+
+            // Category Chart
+            const ctx1 = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryData,
+                        backgroundColor: ['#0078d4', '#27ae60', '#f39c12', '#9b59b6', '#e74c3c', '#3498db'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 12,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Trend Chart
+            const ctx2 = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Submissions',
+                        data: trendData,
+                        borderColor: '#0078d4',
+                        backgroundColor: 'rgba(0, 120, 212, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0078d4',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            function exportReport(format) {
+                alert(`Exporting report as ${format}...`);
+                // Implement export logic
+                // window.location.href = `/Innovation/Reports?handler=Export&format=${format}`;
+            }
+        </script>
+    }
+</body>

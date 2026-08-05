@@ -1,0 +1,134 @@
+@model StaffDashboardModel
+@{
+    ViewData["Title"] = "Staff Dashboard - Innovation Management Tracking System";
+}
+
+<body class="ims-staff-dashboard">
+    <aside class="ims-staff-sidebar">
+        <div class="ims-staff-sidebar-brand">
+            <div class="ims-staff-brand-logo"><img src="~/img/bou.png" alt="Bank of Uganda"></div>
+            <div class="ims-staff-brand-text">Bank of Uganda<span>Innovation Management</span></div>
+        </div>
+        <ul class="ims-staff-sidebar-nav">
+            <li><a asp-page="/Staff/Dashboard" class="ims-staff-nav-active"><span class="ims-staff-nav-icon"><i data-lucide="layout-dashboard" style="width:18px;height:18px;"></i></span><span>Dashboard</span></a></li>
+            <li><a asp-page="/Staff/SubmitIdea"><span class="ims-staff-nav-icon"><i data-lucide="plus" style="width:18px;height:18px;"></i></span><span>Submit Idea</span></a></li>
+            <li><a asp-page="/Staff/MyIdeas"><span class="ims-staff-nav-icon"><i data-lucide="list" style="width:18px;height:18px;"></i></span><span>My Ideas</span></a></li>
+            <li><a asp-page="/Staff/Notifications"><span class="ims-staff-nav-icon"><i data-lucide="mail" style="width:18px;height:18px;"></i></span><span>Notifications</span></a></li>
+            <li><a asp-page="/Staff/Resources"><span class="ims-staff-nav-icon"><i data-lucide="book-open" style="width:18px;height:18px;"></i></span><span>Resources</span></a></li>
+            <li><a asp-page="/Staff/Profile"><span class="ims-staff-nav-icon"><i data-lucide="user" style="width:18px;height:18px;"></i></span><span>Profile</span></a></li>
+        </ul>
+        <div class="ims-staff-sidebar-footer">BOU Innovation System v1.0</div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+        <!-- Header -->
+        <header class="ims-staff-top-header">
+            <div class="ims-staff-header-left">
+                <h2>Dashboard</h2>
+            </div>
+            <div class="ims-staff-header-right">
+                <button class="ims-staff-notification-btn"><i data-lucide="bell" style="width:20px;height:20px;"></i><span class="ims-staff-badge-dot"></span></button>
+                <div class="ims-staff-user-profile">
+                    <div class="ims-staff-avatar">@User.Identity.Name?.Substring(0, 1)</div>
+                    <span class="ims-staff-user-name">@User.Identity.Name</span>
+                </div>
+                <a class="ims-staff-logout-btn" asp-controller="Account" asp-action="Logout">Log out</a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Welcome Bar -->
+            <div class="ims-staff-welcome-bar">
+                <h1>Welcome, @User.Identity.Name</h1>
+                <p>Track and manage your innovation submissions</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="ims-staff-summary-cards">
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Total Ideas Submitted</div>
+                    <div class="ims-staff-card-value">@Model.TotalIdeas</div>
+                    <div class="ims-staff-card-sub">All time</div>
+                </div>
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Ideas Under Review</div>
+                    <div class="ims-staff-card-value">@Model.UnderReview</div>
+                    <div class="ims-staff-card-sub">Awaiting feedback</div>
+                </div>
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Approved Ideas</div>
+                    <div class="ims-staff-card-value">@Model.Approved</div>
+                    <div class="ims-staff-card-sub">Ready for next stage</div>
+                </div>
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Completed Innovations</div>
+                    <div class="ims-staff-card-value">@Model.Completed</div>
+                    <div class="ims-staff-card-sub">Successfully deployed</div>
+                </div>
+            </div>
+
+            <!-- Two Column Grid -->
+            <div class="ims-staff-two-col-grid">
+                <!-- Recent Submissions -->
+                <div class="ims-staff-card">
+                    <div class="ims-staff-section-header">
+                        <h3>Recent Submissions</h3>
+                    </div>
+                    <div class="ims-staff-table-container">
+                        <table class="ims-staff-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Idea Title</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var submission in Model.RecentSubmissions)
+                                {
+                                    <tr>
+                                        <td>@submission.Title</td>
+                                        <td>@submission.Category</td>
+                                        <td><span class="ims-staff-badge ims-staff-badge-@submission.Status.Replace(" ", "-").ToLower()">@submission.Status</span></td>
+                                        <td>@submission.Date.ToString("dd MMM yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Notifications -->
+                <div class="ims-staff-card">
+                    <div class="ims-staff-section-header">
+                        <h3>Recent Notifications</h3>
+                    </div>
+                    @foreach (var notif in Model.RecentNotifications)
+                    {
+                        <div class="ims-staff-notification-item">
+                            <div class="ims-staff-notif-icon"><i data-lucide="@notif.Icon" style="width:18px;height:18px;"></i></div>
+                            <div class="ims-staff-notif-content">
+                                <div class="ims-staff-notif-title">@notif.Subject</div>
+                                <div class="ims-staff-notif-desc">@notif.Message</div>
+                                <div class="ims-staff-notif-time">@notif.TimeAgo</div>
+                            </div>
+                            @if (!notif.IsRead)
+                            {
+                                <div class="ims-staff-unread-dot"></div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Action Button -->
+            <button class="ims-staff-btn ims-staff-btn-primary ims-staff-quick-action-btn" style="width:100%;padding:14px;font-size:15px;">
+                <i data-lucide="plus" style="width:16px;height:16px;"></i> Submit New Idea
+            </button>
+        </main>
+    </div>
+
+</body>

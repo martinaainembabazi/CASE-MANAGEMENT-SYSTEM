@@ -1,0 +1,108 @@
+@model AdminDashboardModel
+@{
+    ViewData["Title"] = "IT Administrator Dashboard - Innovation Management Tracking System";
+}
+
+<body class="ims-staff-dashboard">
+    <!-- Sidebar -->
+    <aside class="ims-staff-sidebar">
+        <div class="ims-staff-sidebar-brand">
+            <div class="ims-staff-brand-logo"><img src="~/img/bou.png" alt="Bank of Uganda"></div>
+            <div class="ims-staff-brand-text">Bank of Uganda<span>Innovation Management</span></div>
+        </div>
+        <ul class="ims-staff-sidebar-nav">
+            <li><a asp-page="/Admin/Dashboard" class="ims-staff-nav-active"><span class="ims-staff-nav-icon"><i data-lucide="layout-dashboard" style="width:18px;height:18px;"></i></span><span>Dashboard</span></a></li>
+            <li><a asp-page="/Admin/Users"><span class="ims-staff-nav-icon"><i data-lucide="users" style="width:18px;height:18px;"></i></span><span>Users</span></a></li>
+            <li><a asp-page="/Admin/ActivityLog"><span class="ims-staff-nav-icon"><i data-lucide="book-open" style="width:18px;height:18px;"></i></span><span>Activity Log</span></a></li>
+            <li><a asp-page="/Admin/Profile"><span class="ims-staff-nav-icon"><i data-lucide="user" style="width:18px;height:18px;"></i></span><span>Profile</span></a></li>
+        </ul>
+        <div class="ims-staff-sidebar-footer">BOU Innovation System v1.0</div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+        <!-- Header -->
+        <header class="ims-staff-top-header">
+            <div class="ims-staff-header-left">
+                <h2>Admin Dashboard</h2>
+            </div>
+            <div class="ims-staff-header-right">
+                <button class="ims-staff-notification-btn"><i data-lucide="bell" style="width:20px;height:20px;"></i><span class="ims-staff-badge-dot"></span></button>
+                <div class="ims-staff-user-profile">
+                    <div class="ims-staff-avatar">@User.Identity.Name?.Substring(0, 1)</div>
+                    <span class="ims-staff-user-name">@User.Identity.Name</span>
+                </div>
+                <a class="ims-staff-logout-btn" asp-controller="Account" asp-action="Logout">Log out</a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Welcome Bar -->
+            <div class="ims-staff-welcome-bar">
+                <h1>IT Administrator Dashboard</h1>
+                <p>Manage system users, monitor activity, and configure settings</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="ims-staff-summary-cards">
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Total Users</div>
+                    <div class="ims-staff-card-value">@Model.Stats.TotalUsers</div>
+                    <div class="ims-staff-card-sub">Registered accounts</div>
+                </div>
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Active Users</div>
+                    <div class="ims-staff-card-value">@Model.Stats.ActiveUsers</div>
+                    <div class="ims-staff-card-sub">Logged in this month</div>
+                </div>
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Locked Accounts</div>
+                    <div class="ims-staff-card-value">@Model.Stats.LockedAccounts</div>
+                    <div class="ims-staff-card-sub">Require unlocking</div>
+                </div>
+                <div class="ims-staff-summary-card">
+                    <div class="ims-staff-card-label">Recent Activities</div>
+                    <div class="ims-staff-card-value">@Model.Stats.RecentActivities</div>
+                    <div class="ims-staff-card-sub">In the last 7 days</div>
+                </div>
+            </div>
+
+            <!-- Recent Login Activity -->
+            <div class="ims-staff-card ims-staff-table-card">
+                <div class="ims-staff-section-header">
+                    <h3>Recent Login Activity</h3>
+                    <a asp-page="/Admin/ActivityLog" class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary">View All</a>
+                </div>
+                <div class="ims-staff-table-container">
+                    <table class="ims-staff-data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Last Login</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.RecentUsers)
+                            {
+                                <tr>
+                                    <td>@user.Name</td>
+                                    <td>@user.Email</td>
+                                    <td>@user.LastLogin.ToString("dd MMM yyyy, hh:mm tt")</td>
+                                    <td>
+                                        <span class="ims-staff-badge @(user.IsOnline ? "ims-staff-badge-success" : "ims-staff-badge-inactive")">
+                                            @(user.IsOnline ? "Online" : "Offline")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>

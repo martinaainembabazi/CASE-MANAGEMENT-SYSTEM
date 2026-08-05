@@ -1,0 +1,113 @@
+@page
+@model MyIdeasModel
+@{
+    ViewData["Title"] = "My Ideas - Innovation Management System";
+}
+
+<body class="ims-staff-dashboard">
+
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+       
+
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Filters Bar -->
+            <div class="ims-staff-filters-bar">
+                <input type="text" class="ims-staff-form-control ims-staff-search-input" placeholder="Search ideas..." asp-for="SearchTerm">
+                <select class="ims-staff-form-control" asp-for="StatusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="Submitted">Submitted</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Pending Information">Pending Information</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Declined">Declined</option>
+                </select>
+                <select class="ims-staff-form-control" asp-for="CategoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="FinTech">FinTech</option>
+                    <option value="Process Improvement">Process Improvement</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Product Innovation">Product Innovation</option>
+                </select>
+                <button class="ims-staff-btn ims-staff-btn-primary ims-staff-btn-sm" asp-page-handler="ApplyFilters">Apply</button>
+            </div>
+
+            <!-- Ideas Table -->
+            <div class="ims-staff-card ims-staff-table-card">
+                <div class="ims-staff-table-container">
+                    <table class="ims-staff-data-table">
+                        <thead>
+                            <tr>
+                                <th>Idea Title</th>
+                                <th>Category</th>
+                                <th>Stage</th>
+                                <th>Status</th>
+                                <th>Date Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var idea in Model.Ideas)
+                            {
+                                <tr>
+                                    <td>@idea.Title</td>
+                                    <td>@idea.CategoryName</td>
+                                    <td><span class="ims-staff-badge ims-staff-badge-@idea.Stage.Replace(" ", "-").ToLower()">@idea.Stage</span></td>
+                                    <td><span class="ims-staff-badge ims-staff-badge-@idea.Status.Replace(" ", "-").ToLower()">@idea.Status</span></td>
+                                    <td>@idea.SubmissionDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <div class="ims-staff-actions">
+                                            <a asp-page="/Staff/IdeaDetails" asp-route-id="@idea.Id" class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary">View</a>
+                                            <a asp-page="/Staff/EditIdea" asp-route-id="@idea.Id" class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary">Edit</a>
+                                            <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary" onclick="retractIdea(@idea.Id)">Retract</button>
+                                            <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-danger" onclick="cancelIdea(@idea.Id)">Cancel</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="ims-staff-pagination">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a asp-page="/Staff/MyIdeas" asp-route-page="@(Model.CurrentPage - 1)" class="ims-staff-pagination-link">&laquo; Previous</a>
+                        }
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <a asp-page="/Staff/MyIdeas" asp-route-page="@i" class="ims-staff-pagination-link @(i == Model.CurrentPage ? "ims-staff-pagination-active" : "")">@i</a>
+                        }
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a asp-page="/Staff/MyIdeas" asp-route-page="@(Model.CurrentPage + 1)" class="ims-staff-pagination-link">Next &raquo;</a>
+                        }
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script>
+            lucide.createIcons();
+
+            function retractIdea(id) {
+                if (confirm('Are you sure you want to retract this idea?')) {
+                    window.location.href = `/Staff/MyIdeas?handler=Retract&id=${id}`;
+                }
+            }
+
+            function cancelIdea(id) {
+                if (confirm('Are you sure you want to cancel this idea? This action cannot be undone.')) {
+                    window.location.href = `/Staff/MyIdeas?handler=Cancel&id=${id}`;
+                }
+            }
+        </script>
+    }
+</body>

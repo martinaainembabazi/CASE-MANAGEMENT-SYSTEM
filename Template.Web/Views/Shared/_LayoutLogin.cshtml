@@ -1,0 +1,125 @@
+﻿
+<!DOCTYPE html>
+<html lang="en" data-coreui-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] Login - Template </title>
+    <link rel="stylesheet" href="~/css/tabler.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme_styles.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Template.Web.styles.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+
+        .main-container {
+            min-height: 100vh;
+            height: 105%;
+            position: relative;
+            background: linear-gradient(135deg, rgba(143, 30, 0, 0.8) 0%, rgba(179, 27, 52, 0.8) 50%, rgba(247, 145, 0, 0.8) 100%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='152' height='152' viewBox='0 0 152 152'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='temple' fill='%23f9a03f' fill-opacity='0.6'%3E%3Cpath d='M152 150v2H0v-2h28v-8H8v-20H0v-2h8V80h42v20h20v42H30v8h90v-8H80v-42h20V80h42v40h8V30h-8v40h-42V50H80V8h40V0h2v8h20v20h8V0h2v150zm-2 0v-28h-8v20h-20v8h28zM82 30v18h18V30H82zm20 18h20v20h18V30h-20V10H82v18h20v20zm0 2v18h18V50h-18zm20-22h18V10h-18v18zm-54 92v-18H50v18h18zm-20-18H28V82H10v38h20v20h38v-18H48v-20zm0-2V82H30v18h18zm-20 22H10v18h18v-18zm54 0v18h38v-20h20V82h-18v20h-20v20H82zm18-20H82v18h18v-18zm2-2h18V82h-18v18zm20 40v-18h18v18h-18zM30 0h-2v8H8v20H0v2h8v40h42V50h20V8H30V0zm20 48h18V30H50v18zm18-20H48v20H28v20H10V30h20V10h38v18zM30 50h18v18H30V50zm-2-40H10v18h18V10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            /* background-size: cover;
+                    background-position: center; */
+            background-repeat: repeat;
+            background-attachment: fixed;
+        }
+
+        .main-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, 
+            rgba(143, 30, 0, 0.4) 0%, 
+            rgba(179, 27, 52, 0.4) 30%, 
+            rgba(247, 145, 0, 0.4) 60%, 
+            rgba(143, 30, 0, 0.4) 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease-in-out infinite;
+        }
+            
+        @@keyframes gradientShift {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            height: 100vh;
+        }
+
+        .btn-primary-sunset-orange {
+            background: linear-gradient(45deg, #f79100, #ff6b35);
+            border: none;
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn-primary-sunset-orange:hover {
+            background: linear-gradient(45deg, #e67e00, #e55a2b);
+            color: white;
+        }
+
+        .divider {
+            color: #6e6e6e;
+            font-size: 0.875rem;
+        }
+
+
+        .form-floating > label {
+            color: #6c757d;
+        }
+
+        .form-control:focus {
+            border-color: #f79100;
+            box-shadow: 0 0 0 0.2rem rgba(247, 145, 0, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container w-100">
+        <div class="content-wrapper">
+            <!--  Body Wrapper -->
+            <div class="container-fluid h-100">
+                <div class="row h-100 align-items-center justify-content-between px-lg-4 mx-0">
+
+                    <!-- Left Content - Hidden on smaller screens -->
+                    <div class="col-lg-6 d-none d-lg-flex text-white mb-4 mb-lg-0 flex-column justify-content-center text-center text-lg-start">
+                        <div class="d-flex align-items-center mb-4 justify-content-center justify-content-lg-start">
+                            <img class="img-fluid me-3" src="/img/bou.png" alt="" width="75" height="75">
+                            <h1 class="mb-0 fw-bold">Bank of Uganda</h1>
+                        </div>
+                        <div class="display-5 mb-0 text-center text-lg-start">
+                            Innovation
+                            <br />Management System
+                        </div>
+                    </div>
+
+                    @RenderBody()
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @* <script src="~/lib/jquery/dist/jquery.min.js"></script> *@
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/sidebarmenu.js"></script>
+    <script src="~/js/app.min.js"></script>
+    <script src="~/lib/simplebar/src/simplebar.js"></script>
+    <script src="~/js/dashboard.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('.user-permissions').select2();
+            $('.user-roles').select2();
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

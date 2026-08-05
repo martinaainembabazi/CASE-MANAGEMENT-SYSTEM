@@ -1,0 +1,232 @@
+@page
+@model CategoriesModel
+@{
+    ViewData["Title"] = "Categories - Innovation Management System";
+}
+
+<body class="ims-staff-dashboard">
+    <!-- Sidebar -->
+    <aside class="ims-staff-sidebar">
+        <div class="ims-staff-sidebar-brand">
+            <div class="ims-staff-brand-logo"><img src="~/boulogo.ico" alt="BOU"></div>
+            <div class="ims-staff-brand-text">Bank of Uganda<span>Innovation Management</span></div>
+        </div>
+        <ul class="ims-staff-sidebar-nav">
+            <li><a asp-page="/Admin/Dashboard"><span class="ims-staff-nav-icon"><i data-lucide="layout-dashboard" style="width:18px;height:18px;"></i></span><span>Dashboard</span></a></li>
+            <li><a asp-page="/Admin/SubmittedIdeas"><span class="ims-staff-nav-icon"><i data-lucide="list" style="width:18px;height:18px;"></i></span><span>Submitted Ideas</span></a></li>
+            <li><a asp-page="/Admin/Categories" class="ims-staff-nav-active"><span class="ims-staff-nav-icon"><i data-lucide="folder-tree" style="width:18px;height:18px;"></i></span><span>Categories</span></a></li>
+            <li><a asp-page="/Staff/Resources"><span class="ims-staff-nav-icon"><i data-lucide="book-open" style="width:18px;height:18px;"></i></span><span>Resources</span></a></li>
+            <li><a asp-page="/Admin/Reports"><span class="ims-staff-nav-icon"><i data-lucide="bar-chart-3" style="width:18px;height:18px;"></i></span><span>Reports</span></a></li>
+            <li><a asp-page="/Admin/Permissions"><span class="ims-staff-nav-icon"><i data-lucide="shield" style="width:18px;height:18px;"></i></span><span>Permissions</span></a></li>
+        </ul>
+        <div class="ims-staff-sidebar-footer">BOU Innovation System v1.0</div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+        <!-- Header -->
+        <header class="ims-staff-top-header">
+            <div class="ims-staff-header-left">
+                <h2>Innovation Categories</h2>
+            </div>
+            <div class="ims-staff-header-right">
+                <button class="ims-staff-notification-btn"><i data-lucide="bell" style="width:20px;height:20px;"></i><span class="ims-staff-badge-dot"></span></button>
+                <div class="ims-staff-user-profile">
+                    <div class="ims-staff-avatar">@User.Identity.Name?.Substring(0, 1)</div>
+                    <span class="ims-staff-user-name">@User.Identity.Name</span>
+                </div>
+                <button class="ims-staff-logout-btn">Log out</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Toolbar -->
+            <div class="ims-staff-toolbar">
+                <div class="ims-staff-filters-bar" style="margin-bottom:0;flex:1;">
+                    <input type="text" class="ims-staff-form-control ims-staff-search-input" placeholder="Search categories..." asp-for="SearchTerm">
+                    <select class="ims-staff-form-control" asp-for="StatusFilter" style="min-width:150px;">
+                        <option value="">All Statuses</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                    <button class="ims-staff-btn ims-staff-btn-primary ims-staff-btn-sm" asp-page-handler="ApplyFilters">Apply</button>
+                </div>
+                <button class="ims-staff-btn ims-staff-btn-primary ims-staff-add-category-btn" onclick="openAddCategoryModal()">
+                    <i data-lucide="plus" style="width:16px;height:16px;"></i> Add Category
+                </button>
+            </div>
+
+            <!-- Categories Table -->
+            <div class="ims-staff-card ims-staff-table-card">
+                <div class="ims-staff-table-container">
+                    <table class="ims-staff-data-table">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Description</th>
+                                <th>Created Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <tr>
+                                    <td><strong>@category.Name</strong></td>
+                                    <td>@category.Description</td>
+                                    <td>@category.CreatedDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <span class="ims-staff-badge @(category.IsActive ? "ims-staff-badge-success" : "ims-staff-badge-inactive")">
+                                            @(category.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="ims-staff-actions">
+                                            <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-secondary" onclick="editCategory(@category.Id)">Edit</button>
+                                            <button class="ims-staff-btn ims-staff-btn-sm ims-staff-btn-danger" onclick="deleteCategory(@category.Id, '@category.Name')">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="ims-staff-pagination">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a asp-page="/Admin/Categories" asp-route-page="@(Model.CurrentPage - 1)" class="ims-staff-pagination-link">&laquo; Previous</a>
+                        }
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <a asp-page="/Admin/Categories" asp-route-page="@i" class="ims-staff-pagination-link @(i == Model.CurrentPage ? "ims-staff-pagination-active" : "")">@i</a>
+                        }
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a asp-page="/Admin/Categories" asp-route-page="@(Model.CurrentPage + 1)" class="ims-staff-pagination-link">Next &raquo;</a>
+                        }
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div class="ims-staff-modal" id="categoryModal" style="display:none;">
+        <div class="ims-staff-modal-overlay" onclick="closeCategoryModal()"></div>
+        <div class="ims-staff-modal-content">
+            <div class="ims-staff-modal-header">
+                <h3 id="categoryModalTitle">Add New Category</h3>
+                <button class="ims-staff-modal-close" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <form method="post" asp-page-handler="SaveCategory">
+                <input type="hidden" asp-for="Category.Id" id="categoryId">
+                <div class="ims-staff-modal-body">
+                    <div class="ims-staff-form-group">
+                        <label for="CategoryName">Category Name *</label>
+                        <input type="text" id="CategoryName" class="ims-staff-form-control" asp-for="Category.Name" placeholder="Enter category name">
+                        <span asp-validation-for="Category.Name" class="ims-staff-validation-feedback"></span>
+                    </div>
+                    <div class="ims-staff-form-group">
+                        <label for="CategoryDescription">Description *</label>
+                        <textarea id="CategoryDescription" class="ims-staff-form-control" rows="3" asp-for="Category.Description" placeholder="Enter category description"></textarea>
+                        <span asp-validation-for="Category.Description" class="ims-staff-validation-feedback"></span>
+                    </div>
+                    <div class="ims-staff-form-group">
+                        <label for="CategoryIsActive">Active</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="CategoryIsActive" asp-for="Category.IsActive" role="switch" style="width:3em;height:1.5em;">
+                        </div>
+                    </div>
+                </div>
+                <div class="ims-staff-modal-footer">
+                    <button type="button" class="ims-staff-btn ims-staff-btn-secondary" onclick="closeCategoryModal()">Cancel</button>
+                    <button type="submit" class="ims-staff-btn ims-staff-btn-primary" id="categorySaveBtn">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="ims-staff-modal" id="deleteModal" style="display:none;">
+        <div class="ims-staff-modal-overlay" onclick="closeDeleteModal()"></div>
+        <div class="ims-staff-modal-content" style="max-width:400px;">
+            <div class="ims-staff-modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="ims-staff-modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="ims-staff-modal-body">
+                <p>Are you sure you want to delete the category <strong id="deleteCategoryName"></strong>?</p>
+                <p style="font-size:13px;color:#888;margin-top:8px;">This action cannot be undone.</p>
+            </div>
+            <div class="ims-staff-modal-footer">
+                <button type="button" class="ims-staff-btn ims-staff-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="ims-staff-btn ims-staff-btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script>
+            lucide.createIcons();
+
+            let deleteId = null;
+
+            function openAddCategoryModal() {
+                document.getElementById('categoryModalTitle').textContent = 'Add New Category';
+                document.getElementById('categoryId').value = '';
+                document.getElementById('CategoryName').value = '';
+                document.getElementById('CategoryDescription').value = '';
+                document.getElementById('CategoryIsActive').checked = true;
+                document.getElementById('categorySaveBtn').textContent = 'Save Category';
+                document.getElementById('categoryModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function editCategory(id) {
+                // Fetch category data via AJAX or load from model
+                // For now, redirect to edit handler
+                window.location.href = `/Admin/Categories?handler=Edit&id=${id}`;
+            }
+
+            function deleteCategory(id, name) {
+                deleteId = id;
+                document.getElementById('deleteCategoryName').textContent = name;
+                document.getElementById('deleteModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeCategoryModal() {
+                document.getElementById('categoryModal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            function closeDeleteModal() {
+                document.getElementById('deleteModal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+                deleteId = null;
+            }
+
+            // Confirm delete
+            document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
+                if (deleteId) {
+                    window.location.href = `/Admin/Categories?handler=Delete&id=${deleteId}`;
+                }
+            });
+
+            // Close modals on ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeCategoryModal();
+                    closeDeleteModal();
+                }
+            });
+        </script>
+    }
+</body>

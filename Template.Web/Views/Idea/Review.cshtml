@@ -1,0 +1,192 @@
+@page
+@model ReviewIdeaModel
+@{
+    ViewData["Title"] = "Review Idea - Innovation Management System";
+}
+
+<body class="ims-staff-dashboard">
+   
+
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Back Link -->
+            <div class="ims-staff-back-link">
+                <a asp-page="/Innovation/SubmittedIdeas" class="ims-staff-back-link-anchor">&larr; Back to Submitted Ideas</a>
+            </div>
+
+            <!-- Review Grid -->
+            <div class="ims-staff-review-grid">
+                <!-- Left Column -->
+                <div>
+                    <!-- Idea Details -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-title">@Model.Idea.Title</h3>
+                            <p class="ims-staff-detail-meta">
+                                Submitted by <strong>@Model.Idea.Submitter</strong> &middot; @Model.Idea.SubmitterBusinessUnit &middot; @Model.Idea.SubmissionDate.ToString("dd MMM yyyy")
+                            </p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Summary</h3>
+                            <p class="ims-staff-detail-text">@Model.Idea.SummaryDescription</p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Problem Statement</h3>
+                            <p class="ims-staff-detail-text">@Model.Idea.ProblemStatement</p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Proposed Solution</h3>
+                            <p class="ims-staff-detail-text">@Model.Idea.ProposedSolution</p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Attachments</h3>
+                            <div class="ims-staff-attachment-list">
+                                @foreach (var attachment in Model.Idea.Attachments)
+                                {
+                                    <span class="ims-staff-attachment-item">
+                                        <i data-lucide="@attachment.Icon" style="width:14px;height:14px;vertical-align:middle;"></i> 
+                                        @attachment.FileName
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Strategic Alignment</h3>
+                            <p><strong>Strategic Objective:</strong> @Model.Idea.StrategicObjective</p>
+                            <p><strong>SDG Contribution:</strong> @Model.Idea.SDGContribution</p>
+                        </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-section-header">
+                            <h3>Comments</h3>
+                        </div>
+                        <div class="ims-staff-comment-thread">
+                            @foreach (var comment in Model.Comments)
+                            {
+                                <div class="ims-staff-comment-item">
+                                    <div class="ims-staff-comment-avatar">@comment.Avatar</div>
+                                    <div class="ims-staff-comment-body">
+                                        <span class="ims-staff-comment-author">@comment.Author</span>
+                                        <span class="ims-staff-comment-meta">@comment.Role &middot; @comment.TimeAgo</span>
+                                        <div class="ims-staff-comment-text">@comment.Text</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="ims-staff-comment-box">
+                            <div class="ims-staff-comment-box-avatar">@User.Identity.Name?.Substring(0, 1)</div>
+                            <textarea class="ims-staff-form-control" rows="2" placeholder="Add a comment..." asp-for="NewComment"></textarea>
+                            <button class="ims-staff-btn ims-staff-btn-primary ims-staff-btn-sm ims-staff-comment-submit-btn" asp-page-handler="AddComment">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Review Controls -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-section-header">
+                            <h3>Review Controls</h3>
+                        </div>
+                        <form method="post" asp-page-handler="SaveReview">
+                            <input type="hidden" asp-for="Idea.Id" />
+                            <div class="ims-staff-form-group">
+                                <label>Change Status</label>
+                                <select class="ims-staff-form-control" asp-for="Review.Status">
+                                    <option value="Submitted">Submitted</option>
+                                    <option value="Under Review" selected>Under Review</option>
+                                    <option value="Pending Information">Pending Information</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Declined">Declined</option>
+                                </select>
+                            </div>
+                            <div class="ims-staff-form-group">
+                                <label>Change Stage</label>
+                                <select class="ims-staff-form-control" asp-for="Review.Stage">
+                                    <option value="Submitted">Submitted</option>
+                                    <option value="Concept Development" selected>Concept Development</option>
+                                    <option value="Experimentation">Experimentation</option>
+                                    <option value="Deployment">Deployment</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                            </div>
+                            <div class="ims-staff-form-group">
+                                <label>Set Timeline</label>
+                                <input type="date" class="ims-staff-form-control" asp-for="Review.TimelineDate" />
+                            </div>
+                            <div class="ims-staff-form-group">
+                                <label>Assign Reviewer</label>
+                                <select class="ims-staff-form-control" asp-for="Review.AssignedReviewerId">
+                                    @foreach (var reviewer in Model.Reviewers)
+                                    {
+                                        <option value="@reviewer.Id">@reviewer.FullName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="ims-staff-form-group">
+                                <label>Review Notes</label>
+                                <textarea class="ims-staff-form-control" rows="3" asp-for="Review.Notes" placeholder="Enter your review notes..."></textarea>
+                            </div>
+                            <div class="ims-staff-review-actions">
+                                <button type="submit" class="ims-staff-btn ims-staff-btn-primary ims-staff-save-review-btn">Save Review</button>
+                                <button type="button" class="ims-staff-btn ims-staff-btn-secondary ims-staff-notify-submitter-btn" onclick="notifySubmitter()">Notify Submitter</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Approval Workflow -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-section-header">
+                            <h3>Approval Workflow</h3>
+                        </div>
+                        <div class="ims-staff-workflow">
+                            @foreach (var step in Model.WorkflowSteps)
+                            {
+                                <div class="ims-staff-workflow-item @(step.StatusClass)">
+                                    <span class="ims-staff-workflow-name">@step.Name</span>
+                                    <span class="ims-staff-workflow-status">
+                                        @if (step.IsComplete)
+                                        {
+                                            <i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle;"></i> <text>Complete</text>
+                                        }
+                                        else if (step.IsPending)
+                                        {
+                                            <span style="color:#e65100;">Pending</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#999;">Not Started</span>
+                                        }
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script>
+            lucide.createIcons();
+
+            function notifySubmitter() {
+                if (confirm('Send notification to the idea submitter?')) {
+                    alert('Notification sent successfully!');
+                    // window.location.href = `/Innovation/ReviewIdea?handler=NotifySubmitter&id=${@Model.Idea.Id}`;
+                }
+            }
+        </script>
+    }
+</body>

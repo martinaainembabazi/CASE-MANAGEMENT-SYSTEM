@@ -1,0 +1,57 @@
+﻿@model Template.Core.Models.Account.LoginViewModel
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnvironment
+@using Microsoft.Extensions.Hosting
+@{
+    Layout = "_LayoutLogin";
+}
+
+
+<!-- Right Sign-in Card -->
+<div class="col-lg-5 col-12 d-flex justify-content-center justify-content-lg-end align-items-center">
+    <div class="card rounded shadow-lg col-12 col-sm-10 col-md-8 col-lg-12">
+        <div class="card-body">
+            <div class="d-lg-none text-center mb-4">
+                <div class="align-items-center justify-content-center mb-5">
+                    <img class="img-fluid me-3" src="/img/bou.png" alt="" width="75" height="75">
+                    <p class="mb-0 text-dark display-6">PAPERLESS</p>
+                </div>
+            </div>
+
+
+            <div class="sign-in-header mb-4">
+                <p class="display-5 mb-2">Sign In</p>
+            </div>
+            @if (HostEnvironment.IsDevelopment())
+            {
+                <div class="alert alert-info small" role="alert">
+                    <strong>Development login:</strong>
+                    <code>admin</code> / <code>Admin@123</code>
+                </div>
+            }
+            <form asp-action="Login" method="post" class="form">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <div class="form-floating">
+                    <input type="text" asp-for="Username" class="form-control" placeholder="Username" autocomplete="off" required>
+                    <label asp-for="Username" for="floatingInput">Username</label>
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+                <div class="form-floating my-3">
+                    <input type="password" asp-for="Password" class="form-control" placeholder="Password" required>
+                    <label asp-for="Password" for="floatingPassword">Password</label>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                <div class="form-group">
+                    <button type="submit" class="form-control btn btn-primary-sunset-orange rounded submit px-3">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+            <hr class="my-3">
+            <div class="alert alert-warning small d-flex align-items-start" role="alert">
+                <i class="ti ti-alert-triangle me-2 mt-1"></i>
+                <p class="mb-0">THIS IS A PRIVATE COMPUTER SYSTEM. It is for authorized use only. By accessing this system, you are consenting to system monitoring for law enforcement purposes. Unauthorized access or use may subject you to criminal prosecution and penalties</p>
+            </div>
+        </div>
+    </div>
+</div>

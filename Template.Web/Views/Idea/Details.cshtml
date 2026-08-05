@@ -1,0 +1,135 @@
+@page
+@model IdeaDetailsModel
+@{
+    ViewData["Title"] = "Idea Details - Innovation Management System";
+}
+
+<body class="ims-staff-dashboard">
+       
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Back Button -->
+            <div class="ims-staff-back-link">
+                <a asp-page="/Staff/MyIdeas" class="ims-staff-back-link-anchor">&larr; Back to My Ideas</a>
+            </div>
+
+            <!-- Detail Grid -->
+            <div class="ims-staff-detail-grid">
+                <!-- Left Column -->
+                <div>
+                    <!-- Idea Details Card -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-title">@Model.Idea.Title</h3>
+                            <p class="ims-staff-detail-meta">
+                                Submitted on @Model.Idea.SubmissionDate.ToString("dd MMM yyyy")
+                                by @Model.Idea.Submitter
+                            </p>
+                            <div class="ims-staff-detail-badges">
+                                <span class="ims-staff-badge ims-staff-badge-@Model.Idea.Status.Replace(" ", "-").ToLower()">@Model.Idea.Status</span>
+                                <span class="ims-staff-badge ims-staff-badge-@Model.Idea.Stage.Replace(" ", "-").ToLower()">@Model.Idea.Stage</span>
+                            </div>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Description</h3>
+                            <p class="ims-staff-detail-text">@Model.Idea.SummaryDescription</p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Problem Statement</h3>
+                            <p class="ims-staff-detail-text">@Model.Idea.ProblemStatement</p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Proposed Solution</h3>
+                            <p class="ims-staff-detail-text">@Model.Idea.ProposedSolution</p>
+                        </div>
+
+                        <div class="ims-staff-detail-section">
+                            <h3 class="ims-staff-detail-section-title">Attachments</h3>
+                            <div class="ims-staff-attachment-list">
+                                @foreach (var attachment in Model.Idea.Attachments)
+                                {
+                                    <span class="ims-staff-attachment-item">
+                                        <i data-lucide="@attachment.Icon" style="width:14px;height:14px;vertical-align:middle;"></i>
+                                        @attachment.FileName
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Card -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-section-header">
+                            <h3>Comments</h3>
+                        </div>
+                        <div class="ims-staff-comment-thread">
+                            @foreach (var comment in Model.Comments)
+                            {
+                                <div class="ims-staff-comment-item">
+                                    <div class="ims-staff-comment-avatar">@comment.Avatar</div>
+                                    <div class="ims-staff-comment-body">
+                                        <span class="ims-staff-comment-author">@comment.Author</span>
+                                        <span class="ims-staff-comment-meta">@comment.Role &middot; @comment.TimeAgo</span>
+                                        <div class="ims-staff-comment-text">@comment.Text</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="ims-staff-comment-box">
+                            <div class="ims-staff-comment-box-avatar">@User.Identity.Name?.Substring(0, 1)</div>
+                            <textarea class="ims-staff-form-control" rows="2" placeholder="Write a comment..." asp-for="NewComment"></textarea>
+                            <button class="ims-staff-btn ims-staff-btn-primary ims-staff-btn-sm ims-staff-comment-submit-btn">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Progress Tracker Card -->
+                    <div class="ims-staff-card">
+                        <div class="ims-staff-section-header">
+                            <h3>Progress Tracker</h3>
+                        </div>
+                        <div class="ims-staff-progress-tracker">
+                            @foreach (var entry in Model.TimelineEntries)
+                            {
+                                <div class="ims-staff-stage-item">
+                                    <div class="ims-staff-stage-dot"></div>
+                                    <div class="ims-staff-stage-name">@entry.StageName</div>
+                                    <div class="ims-staff-stage-date">@entry.Date.ToString("dd MMM yyyy")</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Timeline Card -->
+                    <div class="ims-staff-card">
+                        <h3 class="ims-staff-timeline-title">Timeline</h3>
+                        <div class="ims-staff-timeline-list">
+                            @foreach (var entry in Model.TimelineEntries)
+                            {
+                                <div class="ims-staff-timeline-item">
+                                    <span>@entry.StageName</span>
+                                    <span>@entry.Date.ToString("dd MMM yyyy")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script>
+            lucide.createIcons();
+        </script>
+    }
+</body>
+</html>

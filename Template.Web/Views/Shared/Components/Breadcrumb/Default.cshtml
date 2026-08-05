@@ -1,0 +1,59 @@
+@model List<(string Title, string Url)>
+
+<nav class="custom-breadcrumb" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        @foreach (var crumb in Model)
+        {
+            <li class="breadcrumb-item">
+                @if (!string.IsNullOrEmpty(crumb.Url))
+                {
+                    <a href="@crumb.Url">@crumb.Title</a>
+                }
+                else
+                {
+                    <span>@crumb.Title</span>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+<style>
+    .custom-breadcrumb {
+        font-size: 0.90rem;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+    }
+
+    .custom-breadcrumb .breadcrumb {
+        margin-bottom: 0;
+        background: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
+    }
+
+    .custom-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        padding: 0 0.5rem;
+        color: #6c757d;
+    }
+
+    .custom-breadcrumb .breadcrumb-item a {
+        color: #0d6efd;
+        text-decoration: none;
+        transition: color 0.2s ease-in-out;
+    }
+
+    .custom-breadcrumb .breadcrumb-item a:hover {
+        text-decoration: underline;
+        color: #0a58ca;
+    }
+
+    .custom-breadcrumb .breadcrumb-item span {
+        color: #6c757d;
+    }
+</style>

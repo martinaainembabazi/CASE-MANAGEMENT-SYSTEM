@@ -1,0 +1,436 @@
+@page
+@model SubmitIdeaModel
+@{
+    ViewData["Title"] = "Submit Idea - Innovation Management System";
+}
+
+<body class="ims-staff-dashboard">
+   
+
+    <!-- Main Content -->
+    <div class="ims-staff-main-wrapper">
+
+        <!-- Main Content Area -->
+        <main class="ims-staff-main-content">
+            <!-- Stepper -->
+            <div class="ims-staff-stepper">
+                <div class="ims-staff-stepper-step ims-staff-stepper-active" data-step="1">
+                    <span class="ims-staff-step-number">1</span>
+                    <span class="ims-staff-step-text">Innovator Information</span>
+                </div>
+                <div class="ims-staff-stepper-connector"></div>
+                <div class="ims-staff-stepper-step" data-step="2">
+                    <span class="ims-staff-step-number">2</span>
+                    <span class="ims-staff-step-text">Innovation Idea</span>
+                </div>
+                <div class="ims-staff-stepper-connector"></div>
+                <div class="ims-staff-stepper-step" data-step="3">
+                    <span class="ims-staff-step-number">3</span>
+                    <span class="ims-staff-step-text">Strategic Alignment</span>
+                </div>
+                <div class="ims-staff-stepper-connector"></div>
+                <div class="ims-staff-stepper-step" data-step="4">
+                    <span class="ims-staff-step-number">4</span>
+                    <span class="ims-staff-step-text">Benefits & Implementation</span>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="ims-staff-card">
+                <form method="post" enctype="multipart/form-data" id="ims-staff-submit-form">
+                    <!-- Step 1: Innovator Information -->
+                    <div class="ims-staff-form-page ims-staff-form-page-active" id="ims-staff-step1">
+                        <h3 class="ims-staff-form-page-title">Innovator Details</h3>
+                        <div class="ims-staff-form-row">
+                            <div class="ims-staff-form-group">
+                                <label for="FullName">Full Name *</label>
+                                <input type="text" id="FullName" class="ims-staff-form-control" asp-for="Innovator.FullName" placeholder="Enter your full name">
+                                <span asp-validation-for="Innovator.FullName" class="ims-staff-validation-feedback"></span>
+                            </div>
+                            <div class="ims-staff-form-group">
+                                <label for="Email">Email *</label>
+                                <input type="email" id="Email" class="ims-staff-form-control" asp-for="Innovator.Email" placeholder="Enter your email">
+                                <span asp-validation-for="Innovator.Email" class="ims-staff-validation-feedback"></span>
+                            </div>
+                        </div>
+
+                        <fieldset class="ims-staff-submission-type">
+                            <legend>Are you submitting this idea as an individual or a team?</legend>
+                            <div class="ims-staff-form-radio-group">
+                                <label><input type="radio" name="submissionType" value="individual" checked asp-for="SubmissionType" onchange="toggleSubmissionType()"> Individual</label>
+                                <label><input type="radio" name="submissionType" value="team" asp-for="SubmissionType" onchange="toggleSubmissionType()"> Team</label>
+                            </div>
+                        </fieldset>
+
+                        <!-- Individual Section -->
+                        <div id="ims-staff-individual-section" class="ims-staff-section-toggle ims-staff-section-visible">
+                            <p class="ims-staff-helper-text">Provide your personal details as the idea submitter.</p>
+                            <div class="ims-staff-form-row">
+                                <div class="ims-staff-form-group">
+                                    <label for="BusinessUnit">Business Unit *</label>
+                                    <select id="BusinessUnit" class="ims-staff-form-control" asp-for="Innovator.BusinessUnit">
+                                        <option value="">Select business unit</option>
+                                        <option value="Accounts">Accounts</option>
+                                        <option value="Agricultural Credit Facility & Other Credit Schemes">Agricultural Credit Facility & Other Credit Schemes</option>
+                                        <option value="Administrative Services">Administrative Services</option>
+                                        <option value="Banking">Banking</option>
+                                        <option value="Bank Resolution">Bank Resolution</option>
+                                        <option value="Board Affairs">Board Affairs</option>
+                                        <option value="Commercial Banking">Commercial Banking</option>
+                                        <option value="Communications">Communications</option>
+                                        <option value="Currency">Currency</option>
+                                        <option value="Financial Markets">Financial Markets</option>
+                                        <option value="Financial Stability">Financial Stability</option>
+                                        <option value="Human Resources">Human Resources</option>
+                                        <option value="Information Technology">Information Technology</option>
+                                        <option value="Internal Audit">Internal Audit</option>
+                                        <option value="Legal Services">Legal Services</option>
+                                        <option value="National Payments Systems">National Payments Systems</option>
+                                        <option value="Procurement & Disposal">Procurement & Disposal</option>
+                                        <option value="Research">Research</option>
+                                        <option value="Risk Management">Risk Management</option>
+                                        <option value="Statistics">Statistics</option>
+                                        <option value="Supervision">Supervision</option>
+                                        <option value="Other">Other (Please specify)</option>
+                                    </select>
+                                    <span asp-validation-for="Innovator.BusinessUnit" class="ims-staff-validation-feedback"></span>
+                                </div>
+                                <div class="ims-staff-form-group">
+                                    <label for="DutyStation">Duty Station *</label>
+                                    <select id="DutyStation" class="ims-staff-form-control" asp-for="Innovator.DutyStation">
+                                        <option value="">Select duty station</option>
+                                        <option value="Headquarters">Headquarters</option>
+                                        <option value="BoU Clinic / William Street">BoU Clinic / William Street</option>
+                                        <option value="Arua">Arua</option>
+                                        <option value="Fort Portal">Fort Portal</option>
+                                        <option value="Gulu">Gulu</option>
+                                        <option value="Jinja">Jinja</option>
+                                        <option value="Kabale">Kabale</option>
+                                        <option value="Lira">Lira</option>
+                                        <option value="Masaka">Masaka</option>
+                                        <option value="Mbale">Mbale</option>
+                                        <option value="Mbarara">Mbarara</option>
+                                    </select>
+                                    <span asp-validation-for="Innovator.DutyStation" class="ims-staff-validation-feedback"></span>
+                                </div>
+                            </div>
+                            <div class="ims-staff-form-group">
+                                <label>Age *</label>
+                                <div class="ims-staff-radio-group-vertical" id="ims-staff-age-group">
+                                    @foreach (var age in new[] { "18-24", "25-34", "35-44", "45-54", "55+" })
+                                    {
+                                        <label><input type="radio" name="Innovator.Age" value="@age" asp-for="Innovator.Age"> @age</label>
+                                    }
+                                </div>
+                                <span asp-validation-for="Innovator.Age" class="ims-staff-validation-feedback"></span>
+                            </div>
+                            <div class="ims-staff-form-row">
+                                <div class="ims-staff-form-group">
+                                    <label>Gender *</label>
+                                    <div class="ims-staff-radio-group-vertical">
+                                        <label><input type="radio" name="Innovator.Gender" value="Male" asp-for="Innovator.Gender"> Male</label>
+                                        <label><input type="radio" name="Innovator.Gender" value="Female" asp-for="Innovator.Gender"> Female</label>
+                                    </div>
+                                    <span asp-validation-for="Innovator.Gender" class="ims-staff-validation-feedback"></span>
+                                </div>
+                                <div class="ims-staff-form-group">
+                                    <label>Job Category / Rank *</label>
+                                    <div class="ims-staff-radio-group-vertical">
+                                        @foreach (var rank in new[] { 
+                                            "Executive Management", 
+                                            "Senior Management", 
+                                            "Middle Management", 
+                                            "Operational Management", 
+                                            "Administrative Assistant", 
+                                            "Clerical Staff" 
+                                        })
+                                        {
+                                            <label><input type="radio" name="Innovator.Rank" value="@rank" asp-for="Innovator.Rank"> @rank</label>
+                                        }
+                                    </div>
+                                    <span asp-validation-for="Innovator.Rank" class="ims-staff-validation-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Team Section -->
+                        <div id="ims-staff-team-section" class="ims-staff-section-toggle">
+                            <p class="ims-staff-helper-text">Provide the composition of members contributing to this innovation idea.</p>
+
+                            <!-- 1. Team Members by Rank -->
+                            <table class="ims-staff-matrix-table">
+                                <caption>1. Team Members by Rank</caption>
+                                <thead>
+                                    <tr><th>Rank</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7+</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rank in new[] { "Executive Management", "Senior Management", "Middle Management", "Operational Management", "Administrative Assistant", "Clerical Staff", "Support Staff" })
+                                    {
+                                        <tr>
+                                            <td>@rank</td>
+                                            @for (int i = 1; i <= 7; i++)
+                                            {
+                                                <td><input type="radio" name="TeamRank_@rank.Replace(" ", "_")" value="@i" class="ims-staff-matrix-radio"></td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <!-- 2. Team Members by Age -->
+                            <table class="ims-staff-matrix-table">
+                                <caption>2. Team Members by Age</caption>
+                                <thead>
+                                    <tr><th>Age Group</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7+</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var age in new[] { "18-24", "25-34", "35-44", "45-54", "55+" })
+                                    {
+                                        <tr>
+                                            <td>@age</td>
+                                            @for (int i = 1; i <= 7; i++)
+                                            {
+                                                <td><input type="radio" name="TeamAge_@age.Replace("-", "_")" value="@i" class="ims-staff-matrix-radio"></td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <!-- 3. Team Members by Gender -->
+                            <table class="ims-staff-matrix-table">
+                                <caption>3. Team Members by Gender</caption>
+                                <thead>
+                                    <tr><th>Gender</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7+</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var gender in new[] { "Male", "Female" })
+                                    {
+                                        <tr>
+                                            <td>@gender</td>
+                                            @for (int i = 1; i <= 7; i++)
+                                            {
+                                                <td><input type="radio" name="TeamGender_@gender" value="@i" class="ims-staff-matrix-radio"></td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <!-- 4. Team Members by Station -->
+                            <table class="ims-staff-matrix-table">
+                                <caption>4. Team Members by Station</caption>
+                                <thead>
+                                    <tr><th>Station</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7+</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var station in new[] { "Headquarters", "BoU Clinic / William Street", "Arua", "Gulu", "Jinja", "Kabale", "Lira", "Masaka", "Mbale", "Mbarara", "Fort Portal" })
+                                    {
+                                        <tr>
+                                            <td>@station</td>
+                                            @for (int i = 1; i <= 7; i++)
+                                            {
+                                                <td><input type="radio" name="TeamStation_@station.Replace(" ", "_").Replace("/", "_")" value="@i" class="ims-staff-matrix-radio"></td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <span class="ims-staff-validation-feedback" id="ims-staff-team-matrix-feedback">Please complete at least one team composition matrix.</span>
+                        </div>
+
+                        <div class="ims-staff-form-actions">
+                            <button type="button" class="ims-staff-btn ims-staff-btn-secondary ims-staff-save-draft-btn" onclick="saveDraft()">Save Draft</button>
+                            <button type="button" class="ims-staff-btn ims-staff-btn-primary" onclick="validateStep(1)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Innovation Idea -->
+                    <div class="ims-staff-form-page" id="ims-staff-step2" style="display:none;">
+                        <h3 class="ims-staff-form-page-title">Innovation Idea</h3>
+                        <div class="ims-staff-form-group">
+                            <label for="IdeaTitle">Idea Title *</label>
+                            <p class="ims-staff-field-hint">Provide a concise and descriptive title for your innovation.</p>
+                            <input type="text" id="IdeaTitle" class="ims-staff-form-control" asp-for="Idea.Title" placeholder="Enter a clear title for your idea">
+                            <span asp-validation-for="Idea.Title" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label for="SummaryDescription">Executive Summary *</label>
+                            <p class="ims-staff-field-hint">Briefly describe your idea, how it works, and the value it is intended to create.</p>
+                            <textarea id="SummaryDescription" class="ims-staff-form-control" rows="4" asp-for="Idea.SummaryDescription" placeholder="Describe your idea, how it works, and the value it creates"></textarea>
+                            <span asp-validation-for="Idea.SummaryDescription" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label for="ProblemStatement">Problem or Opportunity *</label>
+                            <p class="ims-staff-field-hint">What challenge, gap, or opportunity does this idea address? What prompted you to develop this idea?</p>
+                            <textarea id="ProblemStatement" class="ims-staff-form-control" rows="4" asp-for="Idea.ProblemStatement" placeholder="Describe the challenge, gap, or opportunity"></textarea>
+                            <span asp-validation-for="Idea.ProblemStatement" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label for="ProposedSolution">Proposed Solution *</label>
+                            <p class="ims-staff-field-hint">Describe the proposed product, service, process, technology, policy, or business model. Explain how it addresses the identified problem or opportunity.</p>
+                            <textarea id="ProposedSolution" class="ims-staff-form-control" rows="4" asp-for="Idea.ProposedSolution" placeholder="Describe your proposed solution"></textarea>
+                            <span asp-validation-for="Idea.ProposedSolution" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label>Attachments</label>
+                            <div class="ims-staff-file-upload-area" onclick="document.getElementById('fileInput').click()">
+                                <input type="file" id="fileInput" asp-for="Attachments" style="display:none;" multiple>
+                                <div class="ims-staff-upload-icon"><i data-lucide="paperclip" style="width:32px;height:32px;"></i></div>
+                                <p>Drag & drop files here or click to browse</p>
+                                <p class="ims-staff-upload-hint">PDF, DOC, XLS, PNG (max 10MB)</p>
+                            </div>
+                        </div>
+                        <div class="ims-staff-form-actions ims-staff-form-actions-between">
+                            <button type="button" class="ims-staff-btn ims-staff-btn-secondary" onclick="prevStep(2)">Back</button>
+                            <div>
+                                <button type="button" class="ims-staff-btn ims-staff-btn-secondary ims-staff-save-draft-btn" onclick="saveDraft()">Save Draft</button>
+                                <button type="button" class="ims-staff-btn ims-staff-btn-primary" onclick="nextStep(2)">Next</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Strategic Alignment -->
+                    <div class="ims-staff-form-page" id="ims-staff-step3" style="display:none;">
+                        <h3 class="ims-staff-form-page-title">Strategic Alignment</h3>
+                        <div class="ims-staff-form-group">
+                            <label>Strategic Objective(s) Supported *</label>
+                            <p class="ims-staff-field-hint">Select the strategic objective(s) that best align with your innovation.</p>
+                            <div class="ims-staff-radio-group-vertical">
+                                @foreach (var objective in new[] { 
+                                    "Enhance Stakeholder Confidence",
+                                    "Enhance Price Stability",
+                                    "Enhance Financial System Soundness and Resilience",
+                                    "Enhance Financial System Development",
+                                    "Enhance Financial Performance",
+                                    "Improve Efficiency and Reliability of Bank Processes",
+                                    "Improve Employee Competence",
+                                    "Improve Organisational Systems and Infrastructure",
+                                    "Enhance Organisational Culture",
+                                    "Other"
+                                })
+                                {
+                                    <label><input type="radio" name="Idea.StrategicObjective" value="@objective" asp-for="Idea.StrategicObjective"> @objective</label>
+                                }
+                            </div>
+                            <span asp-validation-for="Idea.StrategicObjective" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label>Innovation Category *</label>
+                            <p class="ims-staff-field-hint">Select the category that best describes your innovation.</p>
+                            <div class="ims-staff-radio-group-vertical">
+                                <label><input type="radio" name="Idea.Category" value="Product/Service" asp-for="Idea.Category"> <strong>Product / Service</strong> — New or significantly improved products or services that enhance value delivered to stakeholders.</label>
+                                <label><input type="radio" name="Idea.Category" value="Process" asp-for="Idea.Category"> <strong>Process</strong> — Improved workflows or operational methods that increase efficiency, effectiveness, transparency, or resilience.</label>
+                                <label><input type="radio" name="Idea.Category" value="Business Model" asp-for="Idea.Category"> <strong>Business Model</strong> — New approaches to delivering the Bank's mandate, including partnerships, service delivery models, or value creation mechanisms.</label>
+                                <label><input type="radio" name="Idea.Category" value="Policy/Governance" asp-for="Idea.Category"> <strong>Policy / Governance</strong> — Innovations involving policies, governance structures, regulations, decision-making processes, or institutional frameworks.</label>
+                                <label><input type="radio" name="Idea.Category" value="Technology/System" asp-for="Idea.Category"> <strong>Technology / System</strong> — Application or introduction of new technologies, digital solutions, STEM innovations, or system capabilities.</label>
+                                <label><input type="radio" name="Idea.Category" value="Sustainability" asp-for="Idea.Category"> <strong>Sustainability</strong> — Innovations that promote environmental sustainability, social impact, financial inclusion, or strengthen public trust.</label>
+                            </div>
+                            <span asp-validation-for="Idea.Category" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-actions ims-staff-form-actions-between">
+                            <button type="button" class="ims-staff-btn ims-staff-btn-secondary" onclick="prevStep(3)">Back</button>
+                            <div>
+                                <button type="button" class="ims-staff-btn ims-staff-btn-secondary ims-staff-save-draft-btn" onclick="saveDraft()">Save Draft</button>
+                                <button type="button" class="ims-staff-btn ims-staff-btn-primary" onclick="nextStep(3)">Next</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Benefits and Implementation -->
+                    <div class="ims-staff-form-page" id="ims-staff-step4" style="display:none;">
+                        <h3 class="ims-staff-form-page-title">Benefits and Implementation</h3>
+                        <div class="ims-staff-form-group">
+                            <label for="ExpectedBenefits">Expected Benefits / Value Addition *</label>
+                            <p class="ims-staff-field-hint">Describe the expected benefits of the innovation. Consider operational, financial, customer, regulatory, or strategic value.</p>
+                            <textarea id="ExpectedBenefits" class="ims-staff-form-control" rows="4" asp-for="Idea.ExpectedBenefits" placeholder="Describe the expected benefits"></textarea>
+                            <span asp-validation-for="Idea.ExpectedBenefits" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label for="KeyEnablers">Key Enablers / Resources Required *</label>
+                            <p class="ims-staff-field-hint">Identify the resources required for successful implementation. Examples include: ICT support, funding or budget, skills or training, cross-functional collaboration, external partnerships, infrastructure or equipment.</p>
+                            <textarea id="KeyEnablers" class="ims-staff-form-control" rows="4" asp-for="Idea.KeyEnablers" placeholder="List the resources and enablers needed"></textarea>
+                            <span asp-validation-for="Idea.KeyEnablers" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label for="ImplementationApproach">Implementation Approach *</label>
+                            <p class="ims-staff-field-hint">Briefly outline how the innovation could be developed and implemented. Examples include: Proof of Concept (PoC), Prototype, Pilot implementation, Phased rollout, Full-scale deployment.</p>
+                            <textarea id="ImplementationApproach" class="ims-staff-form-control" rows="4" asp-for="Idea.ImplementationApproach" placeholder="Outline your implementation approach"></textarea>
+                            <span asp-validation-for="Idea.ImplementationApproach" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-group">
+                            <label for="ImpactIndicators">Expected Impact Indicators *</label>
+                            <p class="ims-staff-field-hint">Describe how success will be measured. Examples include: reduction in processing time, cost savings, productivity improvements, customer or stakeholder satisfaction, revenue generated or costs avoided, risk reduction, compliance improvements, adoption or usage rates.</p>
+                            <textarea id="ImpactIndicators" class="ims-staff-form-control" rows="4" asp-for="Idea.ImpactIndicators" placeholder="Describe how success will be measured"></textarea>
+                            <span asp-validation-for="Idea.ImpactIndicators" class="ims-staff-validation-feedback"></span>
+                        </div>
+                        <div class="ims-staff-form-actions ims-staff-form-actions-between">
+                            <button type="button" class="ims-staff-btn ims-staff-btn-secondary" onclick="prevStep(4)">Back</button>
+                            <div>
+                                <button type="button" class="ims-staff-btn ims-staff-btn-secondary ims-staff-save-draft-btn" onclick="saveDraft()">Save Draft</button>
+                                <button type="submit" class="ims-staff-btn ims-staff-btn-success ims-staff-submit-idea-btn">Submit Idea</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    @section Scripts {
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <script>
+            lucide.createIcons();
+
+            let currentStep = 1;
+
+            function toggleSubmissionType() {
+                const isTeam = document.querySelector('input[name="submissionType"]:checked').value === 'team';
+                document.getElementById('ims-staff-individual-section').style.display = isTeam ? 'none' : 'block';
+                document.getElementById('ims-staff-team-section').style.display = isTeam ? 'block' : 'none';
+            }
+
+            function goToStep(step) {
+                // Hide all pages
+                document.querySelectorAll('.ims-staff-form-page').forEach(p => p.style.display = 'none');
+                document.getElementById(`ims-staff-step${step}`).style.display = 'block';
+
+                // Update stepper
+                document.querySelectorAll('.ims-staff-stepper-step').forEach((s, i) => {
+                    s.classList.toggle('ims-staff-stepper-active', i + 1 === step);
+                });
+
+                currentStep = step;
+            }
+
+            function nextStep(step) {
+                if (step < 4) goToStep(step + 1);
+            }
+
+            function prevStep(step) {
+                if (step > 1) goToStep(step - 1);
+            }
+
+            function validateStep(step) {
+                // Simple validation - you can expand this
+                goToStep(step + 1);
+            }
+
+            function saveDraft() {
+                // Save draft logic
+                alert('Draft saved successfully!');
+            }
+
+            // File upload click handler
+            document.querySelector('.ims-staff-file-upload-area')?.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'INPUT') {
+                    document.getElementById('fileInput').click();
+                }
+            });
+
+            // Initialize
+            toggleSubmissionType();
+        </script>
+    }
+</body>
