@@ -38,7 +38,6 @@ public class AuthService(
 
         await _signInManager.SignOutAsync();
         
-        //Clear session data if needed
         _httpContextAccessor.HttpContext?.Session.Clear();
     }
 

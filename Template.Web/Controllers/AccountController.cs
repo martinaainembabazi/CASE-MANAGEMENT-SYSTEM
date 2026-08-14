@@ -4,16 +4,19 @@ using Template.Core.Repository.Roles;
 using Template.Core.Services.AdAuthentication;
 using Template.Core.Services.Authorization;
 using Template.Data.Entities;
+using Template.Web.MyModels;
 using Microsoft.AspNetCore.Mvc;
 using SmartBreadcrumbs.Attributes;
 
 namespace Template.Web.Controllers;
 
-public class AccountController(IMapper _mapper, ILogger<AccountController> _logger
-    , IAdAuthenticationService _adAuthService
-    , IAuthService _authService
-    , IAccountRepository _accountRepo
-    , IRoleRepository _roleRepo
+public class AccountController(
+    IMapper _mapper,
+    ILogger<AccountController> _logger,
+    IAdAuthenticationService _adAuthService,
+    IAuthService _authService,
+    IAccountRepository _accountRepo,
+    IRoleRepository _roleRepo
     ) : Controller
 {
     [RequirePermission(SystemPermissions.Account.ViewApplicationUsers)]
@@ -37,7 +40,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
         return View();
     }
 
-
     [HttpPost]
     public async Task<IActionResult> Login(string username, string password, string returnUrl = null)
     {
@@ -51,7 +53,7 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
         }
 
         await _authService.SignInApplicationUser(result.User);
-        _logger.LogInformation("Login successful");
+        _logger.LogInformation("Login successful for user: {Username}", username);
 
         if (Url.IsLocalUrl(returnUrl))
         {
@@ -62,7 +64,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
     }
-
 
     [Breadcrumb("Create", FromAction = nameof(Index))]
     [RequirePermission(SystemPermissions.Account.CreateApplicationUser)]
@@ -75,7 +76,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
 
         return View(model);
     }
-
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -107,6 +107,7 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
 
             return View(model);
         }
+
         // Check if user already exists in our database
         var existingUser = await _accountRepo.FindByName(model.UserName);
         if (existingUser != null)
@@ -114,9 +115,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
             ModelState.AddModelError("UserName", "A user with this username already exists in the system.");
             return View(model);
         }
-
-        // Map from AD to domain model
-        //var userDomain = _mapper.Map<ApplicationUser>(adUserResult.AppUser);
 
         var result = await _accountRepo.Create(adUserResult.AppUser);
 
@@ -141,10 +139,8 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
         var result = await _accountRepo.FindById(userId);
 
         var user = _mapper.Map<ApplicationUserViewModel>(result);
-
         return View("Create", user);
     }
-
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -163,7 +159,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
         }
 
         var user = _mapper.Map<ApplicationUser>(model);
-
         var result = await _accountRepo.Update(user);
 
         if (result)
@@ -195,16 +190,13 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
             return RedirectToAction("Index");
         }
 
-        // get user
         var user = await _accountRepo.FindById(userId);
-
         if (user == null)
         {
             TempData["ErrorMessage"] = $"User with ID {userId} was not found.";
             return RedirectToAction("Index");
         }
 
-        // Get all roles and user's current roles
         var allRoles = await _roleRepo.FindAll();
         var userRoleNames = await _accountRepo.GetApplicationUserRoles(user);
 
@@ -213,7 +205,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
             StringComparer.OrdinalIgnoreCase
         );
 
-        // Build view model
         var model = new ApplicationUserRolesViewModel
         {
             UserId = userId,
@@ -221,7 +212,6 @@ public class AccountController(IMapper _mapper, ILogger<AccountController> _logg
             Roles = new List<ApplicationUserRoleViewModel>()
         };
 
-        // Add roles to model if any exist
         if (allRoles != null && allRoles.Any())
         {
             foreach (var role in allRoles.OrderBy(r => r.Name))

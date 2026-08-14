@@ -1,20 +1,23 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Template.Core.Models.Roles
-{
+namespace Template.Core.Models.Roles;
+
 	public class ApplicationRoleViewModel
 	{
-		[Key]
 		public string Id { get; set; }
-		
 		public string Name { get; set; }
-
-		[Required]
 		public string Description { get; set; }
 
-		[Required]
-		public string Permissions { get; set; }
+public class RolePermissionMatrixViewModel
+{
+    public string RoleId { get; set; }
+    public string RoleName { get; set; }
+    public List<PermissionGroupViewModel> PermissionGroups { get; set; } = new();
+}
 		
-		public string[] ConvertedPermissions { get; set; }
+public class PermissionGroupViewModel
+{
+    public string GroupName { get; set; }
+    public List<PermissionItemViewModel> Permissions { get; set; } = new();
 	}
 }
