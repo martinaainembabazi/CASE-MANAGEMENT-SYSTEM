@@ -88,4 +88,37 @@ public class RoleRepository(ApplicationDbContext _db
     {
         return await _roleManager.Roles.AnyAsync(r => r.Id.ToString() == id);
     }
+
+    // Returns claims/permissions assigned to a role
+    public async Task<IList<Claim>> GetClaims(IdentityRole<Guid> role)
+    {
+        return await _roleManager.GetClaimsAsync(role);
+    }
+
+    // Updates role permissions by syncing claims
+    public async Task<bool> UpdateRoleClaims(IdentityRole<Guid> role, List<string> selectedPermissions)
+    {
+        var existingClaims = await _roleManager.GetClaimsAsync(role);
+
+        // Remove claims no longer selected
+        foreach (var claim in existingClaims)
+        {
+            if (!selectedPermissions.Contains(claim.Value))
+            {
+                await _roleManager.RemoveClaimAsync(role, claim);
+            }
+        }
+
+        // Add newly selected claims
+        var existingClaimValues = existingClaims.Select(c => c.Value).ToList();
+        foreach (var permission in selectedPermissions)
+        {
+            if (!existingClaimValues.Contains(permission))
+            {
+                await _roleManager.AddClaimAsync(role, new Claim("Permission", permission));
+            }
+        }
+
+        return true;
+    }
 }

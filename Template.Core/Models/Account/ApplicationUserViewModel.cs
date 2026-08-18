@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 using Template.Data.Entities;
 
@@ -27,5 +28,9 @@ namespace Template.Core.Models.Account
         public bool PasswordResetRequired { get; set; }
         public DateTime CreatedDate { get; set; }
         public Guid CreatedBy { get; set; }
+
+        // Multi-role selection properties
+        public List<string> SelectedRoles { get; set; } = new();
+        public IEnumerable<SelectListItem>? RoleOptions { get; set; }
     }
 }

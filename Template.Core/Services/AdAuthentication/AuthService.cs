@@ -27,24 +27,34 @@ public class AuthService(
     }
     public async Task SignOutApplicationUser()
     {
-        var userName = _httpContextAccessor.HttpContext.Session.GetString("userName");
-        var user = await _accountRepo.FindByName(userName);
+        // 1. Try session first, fallback to User Identity claim if session is empty/expired
+        var userName = _httpContextAccessor.HttpContext?.Session?.GetString("userName")
+                       ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name;
 
-        if (user != null)
+        // 2. Only attempt database lookup if we actually have a non-null username
+        if (!string.IsNullOrEmpty(userName))
         {
-            user.IsLoggedIn = false;
-            await _userManager.UpdateAsync(user);
+            var user = await _accountRepo.FindByName(userName);
+            if (user != null)
+            {
+                user.IsLoggedIn = false;
+                await _userManager.UpdateAsync(user);
+            }
         }
 
+        // 3. Clear ASP.NET Core identity authentication cookies
         await _signInManager.SignOutAsync();
-        
-        _httpContextAccessor.HttpContext?.Session.Clear();
+
+        // 4. Safely clear session data
+        _httpContextAccessor.HttpContext?.Session?.Clear();
     }
+
 
     public async Task<(bool Success, string Status, ApplicationUser User)> ValidateApplicationUser(string username, string password)
     {
         // Find user
         var user = await _accountRepo.FindByName(username);
+
         if (user == null)
         {
             _logger.LogError($"Failed login attempt by {username}. User does not exist.");

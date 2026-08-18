@@ -1,4 +1,4 @@
-@model RoleListPageViewModel
+@*@model RoleListPageViewModel
 @{
     ViewData["Title"] = "Role Management";
 }
@@ -8,7 +8,7 @@
         <span>Click on "Permissions" to assign specific permissions to each role.</span>
     </div> *@
 
-@if (!Model.Roles.Any())
+@*@if (!Model.Roles.Any())
 {
     <div class="alert alert-info">
         <i class="ti ti-info-circle me-2"></i>
@@ -59,7 +59,7 @@ else
                                 </div>
 
                                 <!-- Delete Confirmation Modal -->
-                                <div class="modal fade" id="deleteRoleModal-@role.Id" tabindex="-1" aria-hidden="true">
+                               @*@ <div class="modal fade" id="deleteRoleModal-@role.Id" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -88,4 +88,62 @@ else
         </div>
     </div>
 
+}*@
+
+@model IEnumerable<Template.Core.Models.Roles.ApplicationRoleViewModel>
+
+@{
+    ViewData["Title"] = "Roles & Rights";
 }
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fw-bold text-danger">Role & Access Management</h3>
+            <p class="text-muted mb-0">Define user roles and assign fine-grained action permissions.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-danger">
+            <i class="ti ti-plus me-1"></i> Add New Role
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Role Name</th>
+                        <th>Description</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@role.Name</strong>
+                            </td>
+                            <td>@role.Description</td>
+                            <td class="text-end">
+                                <a asp-action="Permissions" asp-route-roleId="@role.Id" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="ti ti-lock me-1"></i> Configure Rights
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

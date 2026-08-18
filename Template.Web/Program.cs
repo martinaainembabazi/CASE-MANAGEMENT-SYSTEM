@@ -1,15 +1,20 @@
-using Template.Core.Services.AdAuthentication;
-using Template.Data;
-using Template.Data.Configurations;
-using Template.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
 using SmartBreadcrumbs.Extensions;
 using System.Reflection;
+using Template.Core.Mappings;
+using Template.Core.Repository;
+using Template.Core.Repository.Cases;
+using Template.Core.Services.AdAuthentication;
+using Template.Data;
+using Template.Data.Configurations;
+using Template.Data.Entities;
 var builder = WebApplication.CreateBuilder(args);
 
+// Register Repositories
+builder.Services.AddScoped<ICaseRepository, CaseRepository>();
 
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
@@ -46,10 +51,8 @@ builder.Services.AddSession(options =>
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
-});
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -65,6 +68,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
 
+builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(CasesAutoMapperProfile).Assembly)); // pass the assembly using configuration action
+
+builder.Services.AddScoped<ILawFirmRepository, LawFirmRepository>();
 
 // Register the LDAP authentication service with the interface
 
@@ -93,6 +99,7 @@ builder.Services.AddBreadcrumbs(Assembly.GetExecutingAssembly(), options =>
 	options.LiClasses = "breadcrumb-item";
 	options.ActiveLiClasses = "breadcrumb-item active";
 });
+
 
 var app = builder.Build();
 
@@ -156,6 +163,6 @@ app.MapControllerRoute(
 app.MapBlazorHub();
 
 // Seed roles and default users on startup
-//await DbInitializer.SeedAsync(app.Services);
+await DbInitializer.SeedAsync(app.Services);
 
 app.Run();

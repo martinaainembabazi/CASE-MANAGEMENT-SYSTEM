@@ -32,4 +32,201 @@
 <script>lucide.createIcons();</script>
 </html> *@
 
-<div>testing</div>
+@*<div>testing</div>
+*@
+
+
+@model Template.Web.MyModels.DashboardViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold">Bank of Uganda — Case Management System</h2>
+        <p class="text-muted">Welcome back, @User.Identity?.Name!</p>
+    </div>
+</div>
+
+@* ========================================== *@
+@* 1. ADMIN SECTION                           *@
+@* ========================================== *@
+@if (User.IsInRole("Admin")||User.Identity?.Name=="admin")
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="text-danger border-bottom pb-2 mb-3">
+                <i class="ti ti-shield-lock me-2"></i>IT System Administration
+            </h4>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Total Users</h6>
+                    <h2 class="display-6 fw-bold mb-0">@Model.TotalUsers</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Active Users</h6>
+                    <h2 class="display-6 fw-bold mb-0">@Model.ActiveUsers</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Locked Accounts</h6>
+                    <h2 class="display-6 fw-bold mb-0">@Model.LockedAccounts</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50">Active Law Firms</h6>
+                    <h2 class="display-6 fw-bold mb-0">@Model.ActiveLawFirms</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Quick Actions & Audit Logs -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold">Recent System Audit Trail</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Operation</th>
+                                    <th>Source IP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RecentAuditLogs.Any())
+                                {
+                                    @foreach (var log in Model.RecentAuditLogs)
+                                    {
+                                        <tr>
+                                            <td><strong>@log.UserName</strong></td>
+                                            <td><span class="badge bg-light text-dark border">@log.OperationPerformed</span></td>
+                                            <td><code>@log.SourceIp</code></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3 text-muted">No audit logs recorded yet.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold">Admin Quick Actions</div>
+                <div class="card-body d-grid gap-2">
+                    <a href="/Account/" class="btn btn-outline-primary text-start">
+                        <i class="ti ti-user-plus me-2"></i> Manage User Accounts
+                    </a>
+                    <a href="/Role/" class="btn btn-outline-secondary text-start">
+                        <i class="ti ti-shield me-2"></i> Manage System Roles
+                    </a>
+                    <a href="/AuditLog/" class="btn btn-outline-dark text-start">
+                        <i class="ti ti-list-search me-2"></i> View Full Audit Logs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ========================================== *@
+@* 2. LEGAL OFFICER / LAW FIRM SECTION         *@
+@* ========================================== *@
+@if (User.IsInRole("LegalOfficer") || User.IsInRole("Admin") || User.IsInRole("LawFirm") || User.IsInRole("Lawyer"))
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="text-danger border-bottom pb-2 mb-3">
+                <i class="ti ti-gavel me-2"></i>Legal Matters & Case Tracking
+            </h4>
+        </div>
+
+        <div class="col-lg-8 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>Upcoming Court Hearings</span>
+                    <a href="#" class="btn btn-sm btn-outline-danger">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Case Title</th>
+                                    <th>Hearing Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.UpcomingHearings.Any())
+                                {
+                                    @foreach (var hearing in Model.UpcomingHearings)
+                                    {
+                                        <tr>
+                                            <td>@hearing.Title</td>
+                                            <td><span class="badge bg-warning text-dark">@hearing.HearingDate.ToShortDateString()</span></td>
+                                            <td>
+                                                <a href="/Case/Details/@hearing.CaseId" class="btn btn-sm btn-light">View</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3 text-muted">No scheduled hearings upcoming.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-bold">Case Quick Actions</div>
+                <div class="card-body d-grid gap-2">
+                    @if (User.IsInRole("LegalOfficer") || User.IsInRole("Admin"))
+                    {
+                        <a href="/Case/Create" class="btn btn-danger text-start">
+                            <i class="ti ti-plus me-2"></i> Register New Case
+                        </a>
+                    }
+                    <a href="/Case/Index" class="btn btn-outline-secondary text-start">
+                        <i class="ti ti-files me-2"></i> View Assigned Cases
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}

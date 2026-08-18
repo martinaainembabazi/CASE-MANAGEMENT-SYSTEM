@@ -1,4 +1,4 @@
-@model ApplicationUserListPageViewModel
+@*@model ApplicationUserListPageViewModel
 @{
     ViewData["Title"] = "User Management";
 }
@@ -80,4 +80,110 @@
     <div class="card-footer text-center text-muted">
         <i class="ti ti-mood-empty me-2"></i> No users found
     </div>
+}*@
+
+@model IEnumerable<Template.Core.Models.Account.ApplicationUserViewModel>
+@{
+    ViewData["Title"] = "User Management";
 }
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fw-bold text-danger">User Account Management</h3>
+            <p class="text-muted mb-0">Manage system user details, role permissions, and access states.</p>
+        </div>
+        <a asp-controller="Account" asp-action="Create" class="btn btn-danger">
+            <i class="ti ti-user-plus me-1"></i> Add New Account
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">User Details</th>
+                        <th>Email</th>
+                        <th>Job Title / Station</th>
+                        <th>Account Status</th>
+                        <th class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        bool isLocked = !string.IsNullOrEmpty(user.LockReason);
+                        bool isActive = user.IsActive && user.DisableDate == null;
+
+                        <tr>
+                            <td class="ps-3">
+                                <strong>@(string.IsNullOrEmpty(user.FullName) ? user.UserName : user.FullName)</strong>
+                                <br />
+                                <small class="text-muted">@user.UserName</small>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>
+                                <div>@(user.JobTitle ?? "N/A")</div>
+                                <small class="text-muted">@(user.Station ?? "N/A")</small>
+                            </td>
+                            <td>
+                                @if (isLocked)
+                                {
+                                    <span class="badge bg-danger" title="@user.LockReason">Locked Out</span>
+                                }
+                                else if (isActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group" role="group">
+                                    <!-- View Details -->
+                                    <a asp-controller="Account" asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info" title="View Details">
+                                        <i class="ti ti-eye"></i> Details
+                                    </a>
+
+                                    <!-- Edit User & Roles -->
+                                    <a asp-controller="Account" asp-action="Update" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary" title="Edit User & Roles">
+                                        <i class="ti ti-edit"></i> Edit
+                                    </a>
+
+                                    <!-- Unlock Account -->
+                                    @if (isLocked)
+                                    {
+                                        <form asp-action="Unlock" asp-route-id="@user.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Unlock Account">
+                                                <i class="ti ti-lock-open"></i> Unlock
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <!-- Delete / Deactivate -->
+                                    <a asp-controller="Account" asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger" title="Delete User">
+                                        <i class="ti ti-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

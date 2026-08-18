@@ -42,14 +42,14 @@
 				<div class="brand-logo d-flex align-items-center justify-content-between">
 					<a class="text-nowrap logo-img d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none" asp-controller="Home" asp-action="Index">
 						<img src="~/img/bou.png" width="50" height="45" />
-						<span class="navbar-brand fs-5 text-white ps-3">Paperless</span>
+						<span class="navbar-brand fs-5 text-white ps-3">BOU</span>
 					</a>
 					<div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
 						<i class="ti ti-x fs-8"></i>
 					</div>
 				</div>
 				<!-- Sidebar navigation-->
-				<hr style="color:white;" />
+				<!-- <hr style="color:white;" />
 				<nav class="sidebar-nav scroll-sidebar" data-simplebar="">
 					<ul id="sidebarnav">
 						<li class="sidebar-item">
@@ -222,6 +222,63 @@
 							</permission>
 						</permission>
 					</ul>
+				</nav>-->
+				<nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+					<ul id="sidebarnav">
+						<li class="sidebar-item">
+							<a class="sidebar-link" asp-controller="Home" asp-action="Index" aria-expanded="false">
+								<span><i class="ti ti-layout-dashboard"></i></span>
+								<span class="hide-menu">Dashboard</span>
+							</a>
+						</li>
+
+						<!-- ACCOUNTS & ADMINISTRATION SECTION -->
+						@if (User.IsInRole("Admin") || User.IsInRole("IT Admin"))
+						{
+							<li class="nav-small-cap">
+								<i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+								<span class="hide-menu">ADMINISTRATION</span>
+							</li>
+							<li class="sidebar-item">
+								<a class="sidebar-link" href="/Account/" aria-expanded="false">
+									<span><i class="ti ti-users"></i></span>
+									<span class="hide-menu">User Accounts</span>
+								</a>
+							</li>
+							<li class="sidebar-item">
+								<a class="sidebar-link" href="/Role/" aria-expanded="false">
+									<span><i class="ti ti-shield"></i></span>
+									<span class="hide-menu">Roles & Rights</span>
+								</a>
+							</li>
+							<li class="sidebar-item">
+								<a class="sidebar-link" href="/AuditLog/" aria-expanded="false">
+									<span><i class="ti ti-list"></i></span>
+									<span class="hide-menu">Audit Trail</span>
+								</a>
+							</li>
+						}
+
+						<!-- CASE MANAGEMENT SECTION -->
+						<li class="nav-small-cap">
+							<i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+							<span class="hide-menu">CASE MANAGEMENT</span>
+						</li>
+						<li class="sidebar-item">
+							<a class="sidebar-link" href="/Case/" aria-expanded="false">
+								<span><i class="ti ti-gavel"></i></span>
+								<span class="hide-menu">Cases</span>
+							</a>
+						</li>
+						<li class="sidebar-item">
+							<a class="sidebar-link" href="/LawFirm/" aria-expanded="false">
+								<span><i class="ti ti-building-bank"></i></span>
+								<span class="hide-menu">Law Firms</span>
+							</a>
+						</li>
+
+						
+					</ul>
 				</nav>
 				<!-- End Sidebar navigation -->
 			</div>
@@ -242,16 +299,23 @@
 					</ul>
 					<div class="navbar-collapse justify-content-end px-0" id="navbarNav">
 						<ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
-							<li class="nav-item dropdown">
+							@*<li class="nav-item dropdown">
 								<div class="d-flex align-items-center">
-									<span class="navbar-text me-2">Welcome, @User?.Identity?.Name</span>
 									<a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown"
 									   aria-expanded="false">
 										<i class="ti ti-user-filled fs-6"></i>
 									</a>
-									@* @await Component.InvokeAsync("Profile") *@
-								</div>
-							</li>
+									@* @await Component.InvokeAsync("Profile") 
+						        </div>
+					          </li>*@
+							<li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline"> 
+                                     @Html.AntiForgeryToken()
+                                     <button type="submit" class="btn btn-outline-danger">
+                                           Logout
+                                     </button>
+                                </form>
+                            </li>
 						</ul>
 					</div>
 				</nav>

@@ -1,0 +1,84 @@
+﻿@model IEnumerable<Template.Core.Models.Cases.CaseViewModel>
+
+@{
+    ViewData["Title"] = "Cases & Matters";
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fw-bold text-danger">Cases & Legal Matters</h3>
+            <p class="text-muted mb-0">Manage litigation files, hearings, and assigned legal matters.</p>
+        </div>
+        <div>
+            <a asp-controller="Case" asp-action="Create" class="btn btn-danger">
+                <i class="ti ti-plus me-1"></i> New Case
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle datatable">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Case Title</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Date Created</th>
+                        <th>Created By</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var statusBadge = item.StatusName.ToLower() switch
+                        {
+                            "active" or "open" => "bg-success",
+                            "pending" => "bg-warning text-dark",
+                            "closed" => "bg-secondary",
+                            "archived" => "bg-dark",
+                            _ => "bg-primary"
+                        };
+
+                        <tr>
+                            <td><span class="fw-bold">#@item.Id</span></td>
+                            <td>
+                                <span class="fw-semibold text-primary">@item.Title</span>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <div><small class="text-muted">@(item.Description.Length > 50 ? item.Description[..50] + "..." : item.Description)</small></div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@item.TypeName</span>
+                            </td>
+                            <td>
+                                <span class="badge @statusBadge">@item.StatusName</span>
+                            </td>
+                            <td>@item.DateCreated.ToString("yyyy-MM-dd")</td>
+                            <td>@item.CreatedByName</td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="View Case">
+                                        <i class="ti ti-eye"></i> Details
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Edit Case">
+                                        <i class="ti ti-edit"></i> Edit
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete Case">
+                                        <i class="ti ti-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

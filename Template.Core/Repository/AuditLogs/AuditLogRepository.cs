@@ -1,11 +1,10 @@
 using Template.Core.Repository.ApplicationPermission;
-using Template.Core.Repository.AuditLogs;
 using Template.Data.Configurations;
 using Template.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Template.Core.Repository.Permissions
+namespace Template.Core.Repository.AuditLogs
 {
     public class AuditLogRepository (ApplicationDbContext _db, ILogger<ApplicationPermissionRepository> _logger) : IAuditLogRepository
     {

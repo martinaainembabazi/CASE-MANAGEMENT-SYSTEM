@@ -4,7 +4,6 @@ using Template.Core.Repository.ApplicationPermission;
 using Template.Core.Repository.ApplicationPermissions;
 using Template.Core.Repository.Auditable;
 using Template.Core.Repository.AuditLogs;
-using Template.Core.Repository.Permissions;
 using Template.Core.Repository.Roles;
 using Template.Core.Services.AdAuthentication;
 using Microsoft.AspNetCore.Authorization;

@@ -1,6 +1,6 @@
 @model IEnumerable<Template.Core.Models.AuditLogs.ApplicationAuditLogViewModel>
 
-@{
+@*@{
     ViewData["title"] = "Audit Logs";
     var permissions = ViewData["permissions"] as string;
 }
@@ -66,5 +66,132 @@
 			}
 		});
 	</script>
+}*@
+
+@{
+    ViewData["Title"] = "Audit Trail";
 }
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fw-bold text-danger">Audit Trail & Compliance Logs</h3>
+            <p class="text-muted mb-0">Track system events, administrative changes, and user operations.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle datatable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Operation</th>
+                        <th>Entity Type</th>
+                        <th>Source IP</th>
+                        <th class="text-end">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">@log.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@log.Username</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary">@log.OperationPerformed</span>
+                            </td>
+                            <td>
+                                @(string.IsNullOrEmpty(log.AffectedEntityType) ? "-" : log.AffectedEntityType)
+                            </td>
+                            <td>
+                                <code class="text-secondary">@(string.IsNullOrEmpty(log.SourceIP) ? "N/A" : log.SourceIP)</code>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#logModal_@log.Id">
+                                    <i class="ti ti-eye me-1"></i> View
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Audit Log Details Modal -->
+                        <div class="modal fade" id="logModal_@log.Id" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-light">
+                                        <h5 class="modal-title fw-bold">Audit Log Entry Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" data-bs-target="#logModal_@log.Id" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-start">
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Log Entry ID:</strong> <code>@log.LogEntryId</code>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>User:</strong> @log.Username (@log.UserId)
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Operation:</strong> @log.OperationPerformed
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Timestamp:</strong> @log.CreatedDate.ToString("F")
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Source IP:</strong> @log.SourceIP
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Affected Entity:</strong> @log.AffectedEntityType (@log.AffectedEntityId)
+                                            </div>
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(log.ActionDetails))
+                                        {
+                                            <div class="mb-3">
+                                                <label class="fw-bold text-secondary">Action Summary:</label>
+                                                <p class="border rounded p-2 bg-light">@log.ActionDetails</p>
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(log.OldValues) || !string.IsNullOrEmpty(log.NewValues))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label class="fw-bold text-danger">Old Values:</label>
+                                                    <pre class="bg-dark text-light p-2 rounded" style="max-height: 200px; overflow-y: auto;"><code>@log.OldValues</code></pre>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <label class="fw-bold text-success">New Values:</label>
+                                                    <pre class="bg-dark text-light p-2 rounded" style="max-height: 200px; overflow-y: auto;"><code>@log.NewValues</code></pre>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(log.ErrorMessage))
+                                        {
+                                            <div class="alert alert-danger mb-0">
+                                                <strong>Error Message:</strong> @log.ErrorMessage
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 

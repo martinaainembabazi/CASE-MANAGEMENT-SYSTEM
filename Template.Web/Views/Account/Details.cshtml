@@ -1,0 +1,143 @@
+﻿@model Template.Core.Models.Account.ApplicationUserViewModel
+
+@{
+    ViewData["Title"] = "User Details";
+    bool isLocked = !string.IsNullOrEmpty(Model.LockReason);
+    bool isActive = Model.IsActive && Model.DisableDate == null;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-danger mb-0">User Details</h3>
+        <p class="text-muted mb-0">Full profile summary for @(string.IsNullOrEmpty(Model.FullName) ? Model.UserName : Model.FullName)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> Back to List
+        </a>
+        <a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-danger">
+            <i class="ti ti-edit me-1"></i> Edit Account
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Profile Overview -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent py-3">
+                <h5 class="fw-bold text-secondary mb-0"><i class="ti ti-id me-1"></i> Identity Information</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Full Name</label>
+                        <p class="fw-bold mb-0">@(string.IsNullOrEmpty(Model.FullName) ? $"{Model.FirstName} {Model.LastName}".Trim() : Model.FullName)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Active Directory Username</label>
+                        <p class="fw-bold mb-0">@Model.UserName</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Email Address</label>
+                        <p class="fw-bold mb-0">@(Model.Email ?? "N/A")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Title / Designation</label>
+                        <p class="fw-bold mb-0">@(Model.Title ?? "N/A")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent py-3">
+                <h5 class="fw-bold text-secondary mb-0"><i class="ti ti-building me-1"></i> Organizational Profile</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Job Title</label>
+                        <p class="fw-bold mb-0">@(Model.JobTitle ?? "N/A")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Business Unit</label>
+                        <p class="fw-bold mb-0">@(Model.BusinessUnit ?? "N/A")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Station / Location</label>
+                        <p class="fw-bold mb-0">@(Model.Station ?? "N/A")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Gender / Age Bracket</label>
+                        <p class="fw-bold mb-0">@(Model.Gender ?? "N/A") / @(Model.AgeBracket ?? "N/A")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Status & Permissions -->
+    <div class="col-md-4">
+        <!-- Account Status Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent py-3">
+                <h5 class="fw-bold text-secondary mb-0"><i class="ti ti-shield-check me-1"></i> Account Status</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="text-muted small fw-semibold d-block">State</label>
+                    @if (isLocked)
+                    {
+                        <span class="badge bg-danger fs-6">Locked Out</span>
+                        <div class="alert alert-danger mt-2 py-2 mb-0 small">
+                            <strong>Lock Reason:</strong> @Model.LockReason
+                        </div>
+                    }
+                    else if (isActive)
+                    {
+                        <span class="badge bg-success fs-6">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary fs-6">Inactive</span>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small fw-semibold d-block">Account End Date</label>
+                    <p class="fw-bold mb-0">@(Model.EndDate.HasValue ? Model.EndDate.Value.ToShortDateString() : "No Expiry")</p>
+                </div>
+
+                <div class="mb-0">
+                    <label class="text-muted small fw-semibold d-block">Last Login</label>
+                    <p class="fw-bold mb-0">@(Model.LastLoginDate.HasValue ? Model.LastLoginDate.Value.ToString("g") : "Never")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Roles Card -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent py-3">
+                <h5 class="fw-bold text-secondary mb-0"><i class="ti ti-lock me-1"></i> Assigned Roles</h5>
+            </div>
+            <div class="card-body p-4">
+                @if (Model.SelectedRoles != null && Model.SelectedRoles.Any())
+                {
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var role in Model.SelectedRoles)
+                        {
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-6">
+                                <i class="ti ti-shield me-1"></i>@role
+                            </span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0 small">No roles assigned to this account.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
