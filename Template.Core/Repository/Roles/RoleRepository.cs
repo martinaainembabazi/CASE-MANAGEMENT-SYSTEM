@@ -1,124 +1,60 @@
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Template.Data.Configurations;
 using Template.Data.Entities;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 
 namespace Template.Core.Repository.Roles;
 
-public class RoleRepository(ApplicationDbContext _db
-    , RoleManager<IdentityRole<Guid>> _roleManager
-    , ILogger<RoleRepository> _logger) : IRoleRepository
+public class RoleRepository(ApplicationDbContext _db) : IRoleRepository
 {
-
-    //returns all roles
-    public async Task<ICollection<IdentityRole<Guid>>> FindAll()
+    public async Task<ICollection<Role>> FindAll()
     {
-        return await _roleManager.Roles.AsNoTracking().ToListAsync();
+        return await _db.Roles.AsNoTracking().ToListAsync();
     }
 
-    public async Task<IdentityRole<Guid>> FindById(string roleId)
+    public async Task<Role?> FindById(int id)
     {
-        var role = await _roleManager.FindByIdAsync(roleId.ToString());
-        return role ?? throw new ArgumentException($"Role ID '{roleId}' was not found.");
+        return await _db.Roles.FirstOrDefaultAsync(r => r.Id == id);
     }
 
-    //creates new role
-    public async Task<bool> Create(IdentityRole<Guid> role)
+    public async Task<bool> Create(Role entity)
     {
-        var result = await _roleManager.CreateAsync(role);
-
-        if (result.Succeeded)
-            return true;
-        else
-            return false;
+        await _db.Roles.AddAsync(entity);
+        return await Save();
     }
 
-    //saves database transaction
+    public async Task<bool> Update(Role entity)
+    {
+        _db.Roles.Update(entity);
+        return await Save();
+    }
+
+    public async Task<bool> Delete(int id)
+    {
+        var entity = await FindById(id);
+        if (entity == null) return false;
+
+        _db.Roles.Remove(entity);
+        return await Save();
+    }
+
+    public async Task<bool> IsExists(int id)
+    {
+        return await _db.Roles.AnyAsync(r => r.Id == id);
+    }
+
     public async Task<bool> Save()
     {
         return await _db.SaveChangesAsync() > 0;
     }
 
-    //update role
-    public async Task<bool> Update(IdentityRole<Guid> model)
+    public async Task<IList<Claim>> GetClaims(Role role)
     {
-        var role = await _roleManager.FindByIdAsync(model.Id.ToString());
-
-        if (role != null)
-        {
-            role.Name = model.Name;
-            //role.Description = model.Description;
-            //role.Permissions = model.Permissions;
-
-            var result = await _roleManager.UpdateAsync(role);
-
-            if (result.Succeeded)
-                return true;
-            else
-                return false;
-        }
-        else
-        {
-            return false;
-        }
+        return await Task.FromResult(new List<Claim>());
     }
 
-    //deletes role
-    public async Task<bool> Delete(string id)
+    public async Task<bool> UpdateRoleClaims(Role role, List<string> selectedPermissions)
     {
-        var role = await _roleManager.FindByIdAsync(id);
-
-        if (role != null)
-        {
-            var result = await _roleManager.DeleteAsync(role);
-            if (result.Succeeded)
-                return true;
-            else
-                return false;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    public async Task<bool> IsExists(string id)
-    {
-        return await _roleManager.Roles.AnyAsync(r => r.Id.ToString() == id);
-    }
-
-    // Returns claims/permissions assigned to a role
-    public async Task<IList<Claim>> GetClaims(IdentityRole<Guid> role)
-    {
-        return await _roleManager.GetClaimsAsync(role);
-    }
-
-    // Updates role permissions by syncing claims
-    public async Task<bool> UpdateRoleClaims(IdentityRole<Guid> role, List<string> selectedPermissions)
-    {
-        var existingClaims = await _roleManager.GetClaimsAsync(role);
-
-        // Remove claims no longer selected
-        foreach (var claim in existingClaims)
-        {
-            if (!selectedPermissions.Contains(claim.Value))
-            {
-                await _roleManager.RemoveClaimAsync(role, claim);
-            }
-        }
-
-        // Add newly selected claims
-        var existingClaimValues = existingClaims.Select(c => c.Value).ToList();
-        foreach (var permission in selectedPermissions)
-        {
-            if (!existingClaimValues.Contains(permission))
-            {
-                await _roleManager.AddClaimAsync(role, new Claim("Permission", permission));
-            }
-        }
-
-        return true;
+        return await Task.FromResult(true);
     }
 }

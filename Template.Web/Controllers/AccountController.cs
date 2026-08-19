@@ -457,7 +457,7 @@ public class AccountController(
         // Add selected roles
         foreach (var role in model.Roles.Where(r => r.IsSelected))
         {
-            var roleEntity = await _roleRepo.FindById(role.RoleId);
+            var roleEntity = await _roleRepo.FindById(int.Parse(role.RoleId));
             if (roleEntity != null && !userRoles.Contains(roleEntity.Name, StringComparer.OrdinalIgnoreCase))
             {
                 await _accountRepo.AddApplicationUserFromRole(user, roleEntity.Name);

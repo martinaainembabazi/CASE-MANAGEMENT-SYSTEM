@@ -1,0 +1,38 @@
+﻿@model Template.Core.Models.Roles.RoleViewModel
+
+@{
+    ViewData["Title"] = "Deactivate Role";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-danger mb-0">Deactivate Role</h3>
+        <p class="text-muted mb-0">Confirm deactivation of this authorization role.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white py-3">
+                <h5 class="fw-bold mb-0"><i class="ti ti-alert-triangle me-2"></i> Confirm Role Deactivation</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="fs-6">
+                    Are you sure you want to deactivate the role <strong>@Model.Name</strong>? Users assigned to this role may lose active access privileges.
+                </p>
+
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ti ti-power me-1"></i> Confirm Deactivation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

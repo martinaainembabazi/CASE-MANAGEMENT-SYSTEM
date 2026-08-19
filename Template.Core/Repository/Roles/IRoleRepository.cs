@@ -1,16 +1,12 @@
-using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using Template.Core.Repository.Common;
 using Template.Data.Entities;
 
-namespace Template.Core.Repository.Roles
-{
-public interface IRoleRepository: IRepositoryBase<IdentityRole<Guid>, string>
-    {
-        //Task<bool> Create(ApplicationRole model);
-        Task<bool> Delete(string id);
+namespace Template.Core.Repository.Roles;
 
-        Task<IList<Claim>> GetClaims(IdentityRole<Guid> role);
-        Task<bool> UpdateRoleClaims(IdentityRole<Guid> role, List<string> selectedPermissions);
-    }
+public interface IRoleRepository : IRepositoryBase<Role, int>
+{
+    Task<bool> Delete(int id);
+    Task<IList<Claim>> GetClaims(Role role);
+    Task<bool> UpdateRoleClaims(Role role, List<string> selectedPermissions);
 }

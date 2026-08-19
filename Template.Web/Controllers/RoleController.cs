@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using AutoMapper;
-using Template.Core.Repository.Roles;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Template.Core.Models.Roles;
-using Template.Core.Repository.ApplicationPermission;
-using Microsoft.AspNetCore.Identity;
-using Template.Core.Services.Authorization;
-using SmartBreadcrumbs.Attributes;
-using Template.Core.Models.Permissions;
-using Template.Core.Repository.Accounts;
+using Template.Core.Repository.Roles;
+using Template.Data.Entities;
 
 /*namespace Template.Web.Controllers
 {
@@ -204,144 +200,132 @@ using Template.Core.Repository.Accounts;
 namespace Template.Web.Controllers;
 
 public class RoleController(
-    ILogger<RoleController> _logger,
-    IRoleRepository _roleRepo,
-    IAccountRepository _accountRepo
-    ) : Controller
+    IRoleRepository _repo,
+    IMapper _mapper,
+    ILogger<RoleController> _logger
+) : Controller
 {
-    //[RequirePermission(SystemPermissions.Roles.ViewRoles)]
-    [Breadcrumb("Roles & Rights", FromAction = nameof(Index), FromController = typeof(HomeController))]
+    // GET: Role
     public async Task<IActionResult> Index()
     {
-        var roles = await _roleRepo.FindAll();
-
-        // Map IdentityRole<Guid> to ApplicationRoleViewModel (or equivalent model in Template.Core.Models.Roles)
-        var roleViewModels = roles.Select(role => new ApplicationRoleViewModel
-        {
-            Id = role.Id.ToString(),
-            Name = role.Name ?? string.Empty
-        }).ToList();
-
-        return View(roleViewModels);
-    }
-
-    [RequirePermission(SystemPermissions.Roles.CreateRole)]
-    [Breadcrumb("Create Role", FromAction = nameof(Index))]
-    public IActionResult Create()
-    {
-        return View(new ApplicationRoleViewModel());
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequirePermission(SystemPermissions.Roles.CreateRole)]
-    public async Task<IActionResult> Create(ApplicationRoleViewModel model)
-    {
-        if (!ModelState.IsValid)
-            return View(model);
-
-        var newRole = new IdentityRole<Guid>
-        {
-            Id = Guid.NewGuid(),
-            Name = model.Name
-        };
-
-        var result = await _roleRepo.Create(newRole);
-        if (result)
-        {
-            TempData["SuccessMessage"] = $"Role '{model.Name}' created successfully.";
-            _logger.LogInformation("Admin created new role: {RoleName}", model.Name);
-            return RedirectToAction(nameof(Index));
-        }
-
-        ModelState.AddModelError("", "Failed to create the role. Please try again.");
+        var entities = await _repo.FindAll();
+        var model = _mapper.Map<IEnumerable<RoleViewModel>>(entities);
         return View(model);
     }
 
-    [RequirePermission(SystemPermissions.Roles.EditRole)]
-    [Breadcrumb("Manage Permissions", FromAction = nameof(Index))]
-    public async Task<IActionResult> Permissions(string roleId)
+    // GET: Role/Details/5
+    public async Task<IActionResult> Details(int id)
     {
-        if (string.IsNullOrEmpty(roleId))
-        {
-            TempData["ErrorMessage"] = "Role ID is required.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        var role = await _roleRepo.FindById(roleId);
-        if (role == null)
+        var entity = await _repo.FindById(id);
+        if (entity == null)
         {
             TempData["ErrorMessage"] = "Role not found.";
             return RedirectToAction(nameof(Index));
         }
 
-        var claims = await _roleRepo.GetClaims(role);
-        var assignedPermissions = claims.Select(c => c.Value).ToList();
-
-        var model = new RolePermissionsViewModel
-        {
-            RoleId = roleId,
-            RoleName = role.Name ?? string.Empty,
-            Permissions = BuildPermissionsList(assignedPermissions)
-        };
-
+        var model = _mapper.Map<RoleViewModel>(entity);
         return View(model);
     }
 
+    // GET: Role/Create
+    public IActionResult Create()
+    {
+        return View(new RoleViewModel());
+    }
+
+    // POST: Role/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequirePermission(SystemPermissions.Roles.EditRole)]
-    public async Task<IActionResult> Permissions(RolePermissionsViewModel model)
+    public async Task<IActionResult> Create(RoleViewModel model)
     {
-        var role = await _roleRepo.FindById(model.RoleId);
-        if (role == null)
-            return NotFound();
+        if (!ModelState.IsValid) return View(model);
 
-        var selectedPermissions = model.Permissions
-            .Where(p => p.IsSelected)
-            .Select(p => p.Name)
-            .ToList();
-
-        var result = await _roleRepo.UpdateRoleClaims(role, selectedPermissions);
+        var roleEntity = _mapper.Map<Role>(model);
+        var result = await _repo.Create(roleEntity);
 
         if (result)
         {
-            TempData["SuccessMessage"] = $"Permissions updated successfully for role '{role.Name}'.";
-            _logger.LogInformation("Updated permissions for role: {RoleName}", role.Name);
+            TempData["SuccessMessage"] = $"Role '{model.Name}' created successfully.";
+            _logger.LogInformation("Created new role: {RoleName}", model.Name);
             return RedirectToAction(nameof(Index));
         }
 
-        TempData["ErrorMessage"] = "Failed to update permissions.";
+        ModelState.AddModelError("", "Failed to create role.");
         return View(model);
     }
 
-    private List<PermissionViewModel> BuildPermissionsList(List<string> assignedPermissions)
+    // GET: Role/Edit/5
+    public async Task<IActionResult> Edit(int id)
     {
-        var list = new List<PermissionViewModel>();
-        var nestedTypes = typeof(SystemPermissions).GetNestedTypes();
-
-        foreach (var type in nestedTypes)
+        var entity = await _repo.FindById(id);
+        if (entity == null)
         {
-            var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
-
-            foreach (var field in fields)
-            {
-                if (field.IsLiteral && !field.IsInitOnly)
-                {
-                    var permValue = field.GetValue(null)?.ToString();
-                    if (!string.IsNullOrEmpty(permValue))
-                    {
-                        list.Add(new PermissionViewModel
-                        {
-                            Name = permValue,
-                            DisplayName = $"{type.Name} - {field.Name}",
-                            IsSelected = assignedPermissions.Contains(permValue, StringComparer.OrdinalIgnoreCase)
-                        });
-                    }
-                }
-            }
+            TempData["ErrorMessage"] = "Role not found.";
+            return RedirectToAction(nameof(Index));
         }
 
-        return list;
+        var model = _mapper.Map<RoleViewModel>(entity);
+        return View(model);
+    }
+
+    // POST: Role/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, RoleViewModel model)
+    {
+        if (id != model.Id) return BadRequest();
+
+        if (!ModelState.IsValid) return View(model);
+
+        var entity = await _repo.FindById(id);
+        if (entity == null)
+        {
+            TempData["ErrorMessage"] = "Role not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        _mapper.Map(model, entity);
+        var result = await _repo.Update(entity);
+
+        if (result)
+        {
+            TempData["SuccessMessage"] = $"Role '{model.Name}' updated successfully.";
+            _logger.LogInformation("Updated role #{Id}", id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        ModelState.AddModelError("", "Failed to update role.");
+        return View(model);
+    }
+
+    // GET: Role/Delete/5
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _repo.FindById(id);
+        if (entity == null)
+        {
+            TempData["ErrorMessage"] = "Role not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = _mapper.Map<RoleViewModel>(entity);
+        return View(model);
+    }
+
+    // POST: Role/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var result = await _repo.Delete(id);
+        if (result)
+        {
+            TempData["SuccessMessage"] = "Role deleted successfully.";
+            _logger.LogWarning("Deleted role #{Id}", id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["ErrorMessage"] = "Failed to delete role.";
+        return RedirectToAction(nameof(Index));
     }
 }
