@@ -17,11 +17,11 @@ namespace Template.Data.Entities
         public bool IsLoggedIn { get; set; }
         public DateTime LastActivity { get; set; } = DateTime.UtcNow;
 
-        public string BusinessUnit { get; set; } = "N/A";
-        public string JobTitle { get; set; } = "N/A";
-        public string Station { get; set; } = "N/A";
-        public string AgeBracket { get; set; } = "N/A";
-        public string Gender { get; set; } = "N/A";
+        public string? BusinessUnit { get; set; } = "N/A";
+        public string? JobTitle { get; set; } = "N/A";
+        public string? Station { get; set; } = "N/A";
+        public string? AgeBracket { get; set; } = "N/A";
+        public string? Gender { get; set; } = "N/A";
 
         // Role
         public int? RoleId { get; set; }

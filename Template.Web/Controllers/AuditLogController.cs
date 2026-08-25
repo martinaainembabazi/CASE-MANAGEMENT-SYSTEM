@@ -23,6 +23,7 @@ using SmartBreadcrumbs.Attributes;
 namespace Template.Web.Controllers;
 
 public class AuditLogController(
+    IMapper _mapper,
     ILogger<AuditLogController> _logger,
     IAuditLogRepository _auditLogRepo
     ) : Controller
@@ -32,6 +33,8 @@ public class AuditLogController(
     public async Task<IActionResult> Index()
     {
         var logs = await _auditLogRepo.FindAll();
+        
+        var model = _mapper.Map<IEnumerable<ApplicationAuditLogViewModel>>(logs); // to map entities to my view model
 
         var logViewModels = logs
             .OrderByDescending(x => x.CreatedDate)

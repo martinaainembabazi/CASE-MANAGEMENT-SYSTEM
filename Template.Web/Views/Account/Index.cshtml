@@ -1,86 +1,4 @@
-@*@model ApplicationUserListPageViewModel
-@{
-    ViewData["Title"] = "User Management";
-}
 
-
-
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-            <h2>Users</h2>
-            <p class="card-subtitle text-muted mb-0">Manage application users and their roles</p>
-        </div>
-        <permission name="@SystemPermissions.Account.CreateApplicationUser">
-            <a asp-action="Create" class="btn btn-success btn-md">
-                <i class="ti ti-user-plus ti-light"></i> Create User
-            </a>
-        </permission>
-    </div>
-    <div class="card-body">
-        <table id="usersTable" class="table table-hover table-striped align-middle w-100 datatable">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Username</th>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Business Unit</th>
-                    <th>Job Title</th>
-                    <th>Station</th>
-                    <th>Age Bracket</th>
-                    <th>Gender</th>
-                    <th>Status</th>
-                    <th>Last Login</th>
-                    <th scope="col" class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var user in Model.Users)
-                {
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-user ti-light me-2 text-muted"></i>
-                                <span>@user.UserName</span>
-                            </div>
-                        </td>
-                        <td>@user.FullName</td>
-                        <td>@user.Email</td>
-                        <td>@user.BusinessUnit</td>
-                        <td>@user.JobTitle</td>
-                        <td>@user.Station</td>
-                        <td>@user.AgeBracket</td>
-                        <td>@user.Gender</td>
-                        <td>@(user.IsActive ? "Active" : "Disabled")</td>
-                        <td>@(user.LastLoginDate?.ToString("dd MMM yyyy HH:mm") ?? "Never")</td>
-                        <td class="text-end">
-                            <div class="btn-group" role="group">
-                                <permission name="@SystemPermissions.Account.EditApplicationUser">
-                                    <a asp-action="Update" asp-route-userId="@user.Id" class="btn btn-outline-primary btn-sm" title="Edit User">
-                                        <i class="ti ti-edit"></i>
-                                        <span class="d-none d-md-inline ms-1">Edit</span>
-                                    </a>
-                                </permission>
-                                <permission name="@SystemPermissions.Roles.EditRole">
-                                    <a asp-action="ManageRoles" asp-route-userId="@user.Id" class="btn btn-outline-info btn-sm" title="Manage Roles">
-                                        <i class="ti ti-users"></i>
-                                        <span class="d-none d-md-inline ms-1">Roles</span>
-                                    </a>
-                                </permission>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-@if (!Model.Users.Any())
-{
-    <div class="card-footer text-center text-muted">
-        <i class="ti ti-mood-empty me-2"></i> No users found
-    </div>
-}*@
 
 @model IEnumerable<Template.Core.Models.Account.ApplicationUserViewModel>
 @{
@@ -138,17 +56,13 @@
                                 <small class="text-muted">@(user.Station ?? "N/A")</small>
                             </td>
                             <td>
-                                @if (isLocked)
-                                {
-                                    <span class="badge bg-danger" title="@user.LockReason">Locked Out</span>
-                                }
-                                else if (isActive)
+                                @if (user.IsActive && (!user.DisableDate.HasValue || user.DisableDate > DateTime.UtcNow))
                                 {
                                     <span class="badge bg-success">Active</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Inactive</span>
+                                    <span class="badge bg-danger">Locked Out</span>
                                 }
                             </td>
                             <td class="text-end pe-3">
@@ -162,17 +76,6 @@
                                     <a asp-controller="Account" asp-action="Update" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary" title="Edit User & Roles">
                                         <i class="ti ti-edit"></i> Edit
                                     </a>
-
-                                    <!-- Unlock Account -->
-                                    @if (isLocked)
-                                    {
-                                        <form asp-action="Unlock" asp-route-id="@user.Id" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Unlock Account">
-                                                <i class="ti ti-lock-open"></i> Unlock
-                                            </button>
-                                        </form>
-                                    }
 
                                     <!-- Delete / Deactivate -->
                                     <a asp-controller="Account" asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger" title="Delete User">

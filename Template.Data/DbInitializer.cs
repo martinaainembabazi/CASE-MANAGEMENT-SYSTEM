@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Template.Common.Static;
 using Template.Data.Configurations;
 using Template.Data.Entities;
 
@@ -12,83 +13,96 @@ namespace Template.Data
         {
             using var scope = serviceProvider.CreateScope();
 
-            var context = scope.ServiceProvider
-                .GetRequiredService<ApplicationDbContext>();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            var userManager = scope.ServiceProvider
-                .GetRequiredService<UserManager<ApplicationUser>>();
-
-            // Make sure the database is available
             await context.Database.MigrateAsync();
 
-            // 1. Create the custom Admin role if it doesn't exist
-
-            var adminRole = await context.Roles
-                .FirstOrDefaultAsync(r => r.Name == "Admin");
-
-            if (adminRole == null)
+            if (!context.PaymentMilestones.Any())
             {
-                adminRole = new Role
-                {
-                    Name = "Admin",
-                    Description = "System Administrator",
-                    IsActive = true
-                };
-
-                context.Roles.Add(adminRole);
+                context.PaymentMilestones.AddRange(
+                    new PaymentMilestone { Name = "Issuance of instructions" },
+                    new PaymentMilestone { Name = "Conclusion of hearing" },
+                    new PaymentMilestone { Name = "Judgement" }
+                );
                 await context.SaveChangesAsync();
             }
 
-            // 2. Create the Admin user if it doesn't exist
-
-            var adminUser = await userManager
-                .FindByNameAsync("admin");
-
-            if (adminUser == null)
+            // 1. Helper to seed custom Role table with int Primary Key
+            async Task<Role> EnsureRoleExistsAsync(string roleName, string description)
             {
-                adminUser = new ApplicationUser
+                var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                if (role == null)
                 {
-                    UserName = "admin",
-                    Email = "admin@cms.local",
+                    role = new Role
+                    {
+                        Name = roleName,
+                        Description = description,
+                        IsActive = true
+                    };
+                    context.Roles.Add(role);
+                    await context.SaveChangesAsync();
+                }
+                return role;
+            }
 
-                    FullName = "System Administrator",
-                    FirstName = "System",
-                    LastName = "Administrator",
-                    Title = "System Administrator",
+            var adminRole = await EnsureRoleExistsAsync("Admin", "System Administrator");
+            var itSupportRole = await EnsureRoleExistsAsync(RoleConstants.ItSupport, "IT Support Administrator");
+            var legalStaffRole = await EnsureRoleExistsAsync(RoleConstants.LegalStaff, "Legal Department Staff");
+            var lawFirmRole = await EnsureRoleExistsAsync(RoleConstants.LawFirm, "External Counsel & Law Firm");
 
-                    BusinessUnit = "Administration",
-                    JobTitle = "System Administrator",
-                    Station = "Head Office",
-                    AgeBracket = "N/A",
-                    Gender = "N/A",
-
-                    IsActive = true,
-                    PasswordResetRequired = false,
-
-                    CreatedDate = DateTime.UtcNow,
-                    CreatedBy = Guid.Empty,
-                    LastActivity = DateTime.UtcNow,
-
-                    RoleId = adminRole.Id
-                };
-
-                var result = await userManager.CreateAsync(
-                    adminUser,
-                    "Admin@123"
-                );
-
-                if (!result.Succeeded)
+            // 2. Helper to seed user with int RoleId
+            async Task SeedUserAsync(
+     string username,
+     string email,
+     string fullName,
+     string businessUnit,
+     string jobTitle,
+     Role role,
+     string password)
+            {
+                var user = await userManager.FindByNameAsync(username);
+                if (user == null)
                 {
-                    var errors = string.Join(
-                        ", ",
-                        result.Errors.Select(e => e.Description)
-                    );
+                    user = new ApplicationUser
+                    {
+                        UserName = username,
+                        Email = email,
+                        FullName = fullName,
+                        FirstName = fullName.Split(' ')[0],
+                        LastName = fullName.Contains(' ') ? fullName.Split(' ')[1] : fullName,
+                        Title = jobTitle,
+                        BusinessUnit = businessUnit,
+                        JobTitle = jobTitle,
+                        Station = "Head Office",
+                        AgeBracket = "N/A",
+                        Gender = "N/A",
+                        IsActive = true,
+                        PasswordResetRequired = false,
+                        CreatedDate = DateTime.UtcNow,
+                        CreatedBy = Guid.Empty,
+                        LastActivity = DateTime.UtcNow,
+                        RoleId = role.Id
+                    };
 
-                    throw new Exception(
-                        $"Failed to create admin user: {errors}"
-                    );
+                    var result = await userManager.CreateAsync(user, password);
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(user, role.Name);
+                    }
+                    else
+                    {
+                        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                        throw new Exception($"Failed to create user {username}: {errors}");
+                    }
                 }
             }
+
+            // 3. Execute Seeding
+            await SeedUserAsync("admin", "admin@cms.local", "System Administrator", "Administration", "System Administrator", adminRole, "Admin@123");
+            await SeedUserAsync("itsupport", "itsupport@bou.or.ug", "IT Support Officer", "IT Department", "IT Support Specialist", itSupportRole, "Admin@123");
+            await SeedUserAsync("legalstaff", "legalstaff@bou.or.ug", "Legal Counsel", "Legal Department", "Legal Officer", legalStaffRole, "Admin@123");
+            await SeedUserAsync("counsel", "counsel@lawfirm.com", "External Counsel", "External Law Firm", "Managing Partner", lawFirmRole, "Admin@123");
         }
     }
 }

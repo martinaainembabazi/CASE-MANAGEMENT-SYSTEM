@@ -21,6 +21,8 @@ namespace Template.Data.Entities
         public string Status { get; set; } = "Active";
 
         // Navigation
+
+        public virtual ICollection<Case> Cases { get; set; } = new List<Case>();
         public ICollection<ApplicationUser> Users { get; set; }
             = new List<ApplicationUser>();
 

@@ -1,0 +1,74 @@
+﻿@model IEnumerable<Template.Data.Entities.CaseAssignment>
+@{
+    ViewData["Title"] = "Law Firm Portal";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Law Firm Dashboard</h3>
+        <p class="text-muted mb-0">Overview of active cases assigned to your firm</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <span class="text-muted small fw-bold text-uppercase">Total Assigned Cases</span>
+                <h2 class="fw-bold text-primary mb-0">@Model.Count()</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title fw-bold mb-0">Assigned Cases</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Case Title</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Assigned Date</th>
+                        <th>Instructions</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No cases currently assigned to your law firm.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var assignment in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@assignment.Case?.Title</td>
+                                <td>@(assignment.Case?.Type?.Name ?? "N/A")</td>
+                                <td>
+                                    <span class="badge bg-info text-dark">@(assignment.Case?.Status?.Name ?? "Pending")</span>
+                                </td>
+                                <td>@assignment.AssignedDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    <span class="badge bg-secondary">@assignment.Instructions.Count instruction(s)</span>
+                                </td>
+                                <td>
+                                    <a asp-controller="Cases" asp-action="Details" asp-route-id="@assignment.CaseId" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

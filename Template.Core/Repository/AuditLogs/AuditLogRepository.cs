@@ -10,7 +10,11 @@ namespace Template.Core.Repository.AuditLogs
     {
         public async Task<ICollection<AuditLog>> FindAll()
         {
-            return await _db.AuditLogs.AsNoTracking().OrderByDescending(x => x.CreatedDate).ToListAsync();
+            return await _db.AuditLogs
+                .Include(a => a.User)
+                .AsNoTracking()
+                .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
         }
 
     }

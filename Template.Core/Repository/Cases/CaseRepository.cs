@@ -25,6 +25,8 @@ public class CaseRepository(ApplicationDbContext _context) : ICaseRepository
             .Include(c => c.Type)
             .Include(c => c.Status)
             .Include(c => c.CreatedByUser)
+            .Include(c => c.Documents)                
+            .ThenInclude(d => d.UploadedByUser)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 

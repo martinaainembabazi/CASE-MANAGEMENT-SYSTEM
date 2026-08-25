@@ -18,70 +18,559 @@
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-secondary">
                 <i class="ti ti-edit me-1"></i> Edit Case
             </a>
+            @if (!Model.IsArchived)
+            {
+                <form asp-action="ArchiveCase" asp-controller="Case" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="caseId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" onclick="return confirm('Are you sure you want to archive and close this case?');">
+                        <i class="ti ti-archive me-1"></i> Archive Case
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="UnarchiveCase" asp-controller="Case" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="caseId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        <i class="ti ti-archive-off me-1"></i> Retrieve / Reopen Case
+                    </button>
+                </form>
+            }
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Case Overview Card -->
-    <div class="col-md-8">
-        <div class="card border-0 shadow-sm mb-4">
+<div class="row">
+    <!-- Full-width Column -->
+    <div class="col-12">
+
+        <!-- Case Summary Card -->
+        <div class="card border-0 shadow-sm mb-4 w-100">
             <div class="card-header bg-light">
                 <h5 class="card-title fw-bold mb-0">Case Summary</h5>
             </div>
             <div class="card-body">
-                <p>@(string.IsNullOrEmpty(Model.Description) ? "No description provided." : Model.Description)</p>
+                <p class="mb-0">@Model.Description</p>
             </div>
         </div>
 
-        <!-- Attached Documents / Case Files Table -->
-        <div class="card border-0 shadow-sm">
+        <!-- Attached Documents Card -->
+        <div class="card border-0 shadow-sm mb-4 w-100">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="card-title fw-bold mb-0">Attached Files & Documents (@Model.DocumentCount)</h5>
                 <a asp-controller="Document" asp-action="Upload" asp-route-caseId="@Model.Id" class="btn btn-sm btn-danger">
                     <i class="ti ti-upload me-1"></i> Upload File
                 </a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 @if (Model.DocumentCount == 0)
                 {
-                    <p class="text-muted mb-0">No files uploaded for this case yet.</p>
+                    <div class="p-3">
+                        <p class="text-muted mb-0">No files uploaded for this case yet.</p>
+                    </div>
                 }
                 else
                 {
-                    <!-- Document list goes here -->
-                    <p class="text-success mb-0"><i class="ti ti-file me-1"></i> File attachments loaded.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 w-100">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Description</th>
+                                    <th>Uploaded By</th>
+                                    <th>Date Uploaded</th>
+                                    <th class="text-end text-nowrap">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in Model.Documents)
+                                {
+                                    <tr>
+                                        <td class="text-nowrap">
+                                            <i class="ti ti-file-text me-2 text-primary"></i>
+                                            <span class="fw-semibold">@doc.FileName</span>
+                                        </td>
+                                        <td>@(string.IsNullOrEmpty(doc.Description) ? "-" : doc.Description)</td>
+                                        <td class="text-nowrap">@doc.UploadedByName</td>
+                                        <td class="text-nowrap">@doc.UploadDate.ToString("dd MMM yyyy HH:mm")</td>
+                                        <td class="text-end text-nowrap">
+                                            <div class="d-inline-flex gap-2">
+                                                <a href="@doc.FilePath" target="_blank" download="@doc.FileName" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="ti ti-download me-1"></i> Download
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDocModal-@doc.Id">
+                                                    <i class="ti ti-trash me-1"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
             </div>
         </div>
-    </div>
 
-    <!-- Metadata Sidebar Card -->
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
+    </div>
+</div>
+
+<div class="row g-4 mb-4 align-items-stretch">
+
+    <!-- 1. Case Info Card -->
+    <div class="col-12 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-light">
                 <h5 class="card-title fw-bold mb-0">Case Info</h5>
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span class="text-muted">Date Created:</span>
                         <span class="fw-semibold">@Model.DateCreated.ToString("yyyy-MM-dd")</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span class="text-muted">Created By:</span>
                         <span class="fw-semibold">@Model.CreatedByName</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span class="text-muted">Hearings:</span>
-                        <span class="badge bg-primary">@Model.HearingCount</span>
+                        <span class="badge bg-primary rounded-pill">@Model.HearingCount</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <span class="text-muted">Assignments:</span>
-                        <span class="badge bg-secondary">@Model.AssignmentCount</span>
+                        <span class="badge bg-info rounded-pill">@Model.AssignmentCount</span>
                     </li>
                 </ul>
             </div>
+        </div>
+    </div>
+
+    <!-- 2. Case Assignment Card -->
+    <div class="col-12 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Case Assignment</h5>
+                @if (Model.ActiveAssignmentId.HasValue)
+                {
+                    <span class="badge bg-light text-primary fw-bold">Assigned</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark fw-bold">Unassigned</span>
+                }
+            </div>
+            <div class="card-body">
+                <!-- Current Assigned Law Firm & Unassign Action -->
+                <div class="mb-3 d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong class="text-muted small">Assigned Law Firm:</strong><br />
+                        <span class="fs-6 fw-bold text-dark">
+                            @(string.IsNullOrEmpty(Model.AssignedLawFirmName) ? "None Assigned" : Model.AssignedLawFirmName)
+                        </span>
+                    </div>
+
+                    @if (Model.ActiveAssignmentId.HasValue)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#unassignModal">
+                            <i class="ti ti-user-x me-1"></i> Unassign
+                        </button>
+                    }
+                </div>
+
+                <hr class="my-3" />
+
+                <!-- Additional Instructions (Visible when assigned) -->
+                @if (Model.ActiveAssignmentId.HasValue)
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-secondary">Send Additional Instructions</label>
+                        <form asp-action="SendInstruction" method="post">
+                            <input type="hidden" name="caseId" value="@Model.Id" />
+                            <input type="hidden" name="assignmentId" value="@Model.ActiveAssignmentId" />
+
+                            <div class="mb-2">
+                                <textarea name="instructionsText" class="form-control form-control-sm" rows="2" placeholder="Write additional instruction or update..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="ti ti-send me-1"></i> Send Instructions
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Instruction History Log -->
+                    @if (Model.InstructionHistory != null && Model.InstructionHistory.Any())
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Instruction History</label>
+                            <div class="list-group list-group-flush border-top border-bottom" style="max-height: 180px; overflow-y: auto;">
+                                @foreach (var item in Model.InstructionHistory)
+                                {
+                                    <div class="list-group-item px-0 py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="fw-bold text-dark">@item.SentByName</small>
+                                            <small class="text-muted" style="font-size: 0.75rem;">@item.DateSent.ToString("dd MMM yyyy HH:mm")</small>
+                                        </div>
+                                        <p class="mb-0 small text-muted">@item.InstructionsText</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <hr class="my-3" />
+                }
+
+                <!-- Assign / Reassign Accordion -->
+                <div class="accordion" id="assignmentAccordion">
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header" id="headingAssign">
+                            <button class="accordion-button collapsed px-0 py-1 bg-transparent text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAssign">
+                                <i class="ti ti-building me-1"></i> @(Model.ActiveAssignmentId.HasValue ? "Reassign Law Firm" : "Assign Law Firm")
+                            </button>
+                        </h2>
+                        <div id="collapseAssign" class="accordion-collapse collapse" data-bs-parent="#assignmentAccordion">
+                            <div class="accordion-body px-0 pt-2">
+                                <form asp-action="AssignLawFirm" asp-controller="Case" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="caseId" value="@Model.Id" />
+
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold">Select Law Firm</label>
+                                        <select name="lawFirmId" asp-items="Model.AvailableLawFirms" class="form-select form-select-sm" required>
+                                            <option value="">-- Select Law Firm --</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Initial Instructions</label>
+                                        <textarea name="initialInstructions" class="form-control form-control-sm" rows="2" placeholder="Initial case notes or directions..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                                        Confirm & Assign
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Unassign Confirmation Modal -->
+@if (Model.ActiveAssignmentId.HasValue)
+{
+    <div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="UnassignLawFirm" asp-controller="Case" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="caseId" value="@Model.Id" />
+                    <input type="hidden" name="assignmentId" value="@Model.ActiveAssignmentId" />
+
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="unassignModalLabel">Confirm Unassignment</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>Are you sure you want to recall and unassign this case from <strong>@Model.AssignedLawFirmName</strong>?</p>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Reason for Unassignment / Recall</label>
+                            <textarea name="reason" class="form-control form-control-sm" rows="3" placeholder="Provide reason or remarks for recalling the case..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-danger">Unassign & Notify Firm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+<!-- Legal Fees / Payments Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="ti ti-receipt me-2"></i>Legal Fees & Payments</h5>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+            <i class="ti ti-plus me-1"></i> Log Fee Payment
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+            <span class="fw-bold text-muted">Total Legal Fees Paid:</span>
+            <h4 class="fw-bold text-success mb-0">@Model.TotalPayments.ToString("N2")</h4>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Milestone</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Payment Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Payments == null || !Model.Payments.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">No fee payments recorded for this case yet.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var payment in Model.Payments)
+                        {
+                            <tr>
+                                <td><span class="badge bg-info text-dark">@payment.MilestoneName</span></td>
+                                <td class="fw-bold">@payment.Amount.ToString("N2")</td>
+                                <td>@(string.IsNullOrWhiteSpace(payment.Description) ? "-" : payment.Description)</td>
+                                <td>@payment.PaymentDate.ToString("dd MMM yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal to Add Payment -->
+<div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddPayment" asp-controller="Case" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="caseId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Record Legal Fee Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Payment Milestone</label>
+                        <select name="paymentMilestoneId" class="form-select" required>
+                            <option value="">-- Select Milestone --</option>
+                            @if (ViewBag.Milestones != null)
+                            {
+                                foreach (var item in (IEnumerable<Template.Data.Entities.PaymentMilestone>)ViewBag.Milestones)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Fee Amount</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="0.00" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description / Remarks</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Fee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Provisions Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0 fw-bold"><i class="ti ti-pig-money me-2"></i>Year-End Financial Provisions</h5>
+            <small class="text-muted">Encumbered funds reserved for pending liabilities across financial years</small>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addProvisionModal">
+            <i class="ti ti-plus me-1"></i> Add Provision
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+            <span class="fw-bold text-muted">Total Provisioned (Reserved) Amount:</span>
+            <h4 class="fw-bold text-primary mb-0">@Model.TotalProvisionedAmount.ToString("N2")</h4>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Financial Year</th>
+                        <th>Provision Amount</th>
+                        <th>Justification</th>
+                        <th>Status</th>
+                        <th>Date Logged</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.FinancialProvisions == null || !Model.FinancialProvisions.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">No financial provisions recorded for this case yet.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.FinancialProvisions)
+                        {
+                            <tr>
+                                <td class="fw-bold">@item.FinancialYear</td>
+                                <td class="fw-bold text-primary">@item.Amount.ToString("N2")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Justification) ? "-" : item.Justification)</td>
+                                <td>
+                                    <span class="badge @(item.Status == "Approved" ? "bg-success" : item.Status == "RolledOver" ? "bg-info text-dark" : "bg-warning text-dark")">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td>@item.DateLogged.ToString("dd MMM yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Provision Modal -->
+<div class="modal fade" id="addProvisionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddFinancialProvision" asp-controller="Case" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="caseId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Record Year-End Financial Provision</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Financial Year</label>
+                        <select name="financialYear" class="form-select" required>
+                            <option value="">-- Select Financial Year --</option>
+                            <option value="FY 2025/2026">FY 2025/2026</option>
+                            <option value="FY 2026/2027" selected>FY 2026/2027</option>
+                            <option value="FY 2027/2028">FY 2027/2028</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Provision Amount</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" placeholder="0.00" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Justification / Remarks</label>
+                        <textarea name="justification" class="form-control" rows="3" placeholder="State reason for reserving budget for this case (e.g., pending court judgment fee)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Provision</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Hearings Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="ti ti-gavel me-2"></i>Case Hearings Schedule</h5>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleHearingModal">
+            <i class="ti ti-calendar-plus me-1"></i> Schedule Hearing
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Court Location</th>
+                        <th>Judge / Magistrate</th>
+                        <th>Purpose</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Hearings == null || !Model.Hearings.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">No court hearings scheduled for this case yet.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var h in Model.Hearings)
+                        {
+                            <tr>
+                                <td class="fw-bold">@h.HearingDate.ToString("dd MMM yyyy HH:mm")</td>
+                                <td>@h.CourtLocation</td>
+                                <td>@h.JudgeOrMagistrate</td>
+                                <td>@(string.IsNullOrWhiteSpace(h.Purpose) ? "-" : h.Purpose)</td>
+                                <td>
+                                    <span class="badge @(h.Status == "Scheduled" ? "bg-primary" : h.Status == "Completed" ? "bg-success" : "bg-secondary")">
+                                        @h.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Hearing Modal -->
+<div class="modal fade" id="scheduleHearingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ScheduleHearing" asp-controller="Case" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="caseId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Schedule Court Hearing</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Hearing Date & Time</label>
+                        <input type="datetime-local" name="hearingDate" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Court Location / Chamber</label>
+                        <input type="text" name="courtLocation" class="form-control" placeholder="e.g. High Court Room 3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Presiding Judge / Magistrate</label>
+                        <input type="text" name="judgeOrMagistrate" class="form-control" placeholder="e.g. Hon. Justice..." required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Hearing Purpose</label>
+                        <input type="text" name="purpose" class="form-control" placeholder="e.g. Preliminary Hearing, Mention, Judgement" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Schedule</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

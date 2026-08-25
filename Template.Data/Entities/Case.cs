@@ -13,7 +13,7 @@ namespace Template.Data.Entities
 
         public DateTime DateCreated { get; set; }
 
-        // Case Type
+        // Case Type 
         public int TypeId { get; set; }
         public CaseType Type { get; set; } = null!;
 
@@ -25,9 +25,14 @@ namespace Template.Data.Entities
         public Guid CreatedBy { get; set; }
         public ApplicationUser CreatedByUser { get; set; } = null!;
 
+        //Archive flags
         public bool IsArchived { get; set; }
+        public DateTime? ArchivedDate { get; set; }
 
         public DateTime? DateClosed { get; set; }
+
+        public int? LawFirmId { get; set; }
+        public virtual LawFirm? LawFirm { get; set; }
 
         // Navigation
         public ICollection<Report> Reports { get; set; }
@@ -54,4 +59,6 @@ namespace Template.Data.Entities
         public ICollection<Notification> Notifications { get; set; }
             = new List<Notification>();
     }
+
+    
 }

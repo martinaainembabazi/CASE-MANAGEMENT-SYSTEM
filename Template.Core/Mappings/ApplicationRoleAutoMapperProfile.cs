@@ -14,7 +14,9 @@ namespace Template.Core.Mappings
     {
         public ApplicationRoleAutoMapperProfile()
         {
-            CreateMap<Role, RoleViewModel>().ReverseMap();
+            CreateMap<Role, RoleViewModel>()
+                .ForMember(dest => dest.AssignedUsersCount, opt => opt.MapFrom(src => src.Users.Count))
+                .ReverseMap();
 
             CreateMap<IdentityRole<Guid>, ApplicationRoleViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))

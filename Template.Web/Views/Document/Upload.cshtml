@@ -1,0 +1,42 @@
+﻿@model Template.Core.Models.Document.UploadDocumentViewModel
+
+@{
+    ViewData["Title"] = "Upload Supporting Document";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Upload Document for Case #@Model.CaseId</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-controller="Document" asp-action="Upload" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="CaseId" />
+
+                    <div class="mb-3">
+                        <label asp-for="File" class="form-label fw-bold"></label>
+                        <input asp-for="File" type="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" required />
+                        <span asp-validation-for="File" class="text-danger"></span>
+                        <div class="form-text">Allowed formats: <strong>PDF, Word (.doc, .docx), Excel (.xls, .xlsx)</strong></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-bold"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Briefly describe this document..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between pt-2">
+                        <a asp-controller="Cases" asp-action="Details" asp-route-id="@Model.CaseId" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ti ti-upload me-1"></i> Upload File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

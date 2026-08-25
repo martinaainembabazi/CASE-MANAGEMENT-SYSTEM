@@ -19,5 +19,10 @@ namespace Template.Data.Entities
         public Lawyer? AssignedLawyer { get; set; }
 
         public DateTime AssignedDate { get; set; }
+        public bool IsActive { get; set; } = true;
+
+        public string? InstructionsText { get; set; }
+
+        public ICollection<CaseInstruction> Instructions { get; set; } = new List<CaseInstruction>();
     }
 }

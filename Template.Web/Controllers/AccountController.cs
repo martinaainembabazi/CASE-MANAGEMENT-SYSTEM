@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,6 +11,7 @@ using Template.Core.Repository.Roles;
 using Template.Core.Services.AdAuthentication;
 using Template.Core.Services.Authorization;
 using Template.Data.Entities;
+using Template.ViewModels;
 using Template.Web.MyModels;
 
 // Commented out the permissions to gain access to the pages
@@ -24,6 +26,7 @@ public class AccountController(
     IAccountRepository _accountRepo,
     IRoleRepository _roleRepo,
    UserManager<ApplicationUser> _userManager,
+   SignInManager<ApplicationUser> _signInManager,
     RoleManager<IdentityRole<Guid>> _roleManager
     ) : Controller
 {
@@ -61,105 +64,106 @@ public class AccountController(
             return View();
         }
 
+        // Check if account is locked out or deactivated
+        if (result.User != null && (!result.User.IsActive || result.User.DisableDate.HasValue))
+        {
+            var lockMessage = !string.IsNullOrWhiteSpace(result.User.LockReason)
+                ? $"Account locked: {result.User.LockReason}"
+                : "Your account has been locked by IT Support. Please contact your administrator.";
+
+            ViewData["status"] = "AccountLocked";
+            ModelState.AddModelError("", lockMessage);
+            return View();
+        }
+
         await _authService.SignInApplicationUser(result.User);
-        //_logger.LogInformation("Login successful for user: {Username}", username);
+        _logger.LogInformation("Login successful for user: {Username}", username);
 
         if (Url.IsLocalUrl(returnUrl))
         {
-            _logger.LogInformation("Login successful for user: {Username}", username);
             return Redirect(returnUrl);
         }
-        else
+
+        // Role-based dashboard redirection
+        if (User.IsInRole(RoleConstants.ItSupport))
         {
-            _logger.LogInformation("Login successful for user: {Username}", username);
-            return RedirectToAction(nameof(HomeController.Index), "Home");
+            return RedirectToAction("Dashboard", "Admin");
         }
+
+        if (User.IsInRole(RoleConstants.LawFirm))
+        {
+            return RedirectToAction("Dashboard", "LawFirmPortal");
+        }
+
+        if (User.IsInRole(RoleConstants.LegalStaff))
+        {
+            return RedirectToAction("Dashboard", "Case");
+        }
+
+        // Default fallback if role is unspecified or standard user
+        return RedirectToAction(nameof(HomeController.Index), "Home");
     }
 
+    // GET: User/Create
     [HttpGet]
-    [Breadcrumb("Create", FromAction = nameof(Index))]
-    //[RequirePermission(SystemPermissions.Account.CreateApplicationUser)]
-    public IActionResult Create()
+    [Authorize(Roles = "Admin,IT Support")]
+    public async Task<IActionResult> Create()
     {
-        var model = new CreateViewModel();
+        var model = new CreateViewModel
+        {
+            AvailableRoles = await _roleManager.Roles
+                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                .ToListAsync()
+        };
+
         return View(model);
     }
 
+    // POST: User/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    //[RequirePermission(SystemPermissions.Account.CreateApplicationUser)]
+    [Authorize(Roles = "Admin,IT Support")]
     public async Task<IActionResult> Create(CreateViewModel model)
     {
         if (!ModelState.IsValid)
         {
+            model.AvailableRoles = await _roleManager.Roles
+                .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+                .ToListAsync();
             return View(model);
         }
 
-        // Map to ApplicationUserViewModel expected by _adAuthService
-        var appUserVm = new ApplicationUserViewModel
+        var user = new ApplicationUser
         {
-            UserName = model.UserName
+            UserName = model.Username.Trim(),
+            EmailConfirmed = true
         };
 
-        /*var adUserResult = _adAuthService.IsExistsOnAd(appUserVm);
+        // Create user with the local password
+        var result = await _userManager.CreateAsync(user, model.Password);
 
-        if (!adUserResult.IsSuccess)
+        if (result.Succeeded)
         {
-            switch (adUserResult.ResultType)
+            // Assign selected role for access control
+            if (!string.IsNullOrEmpty(model.SelectedRole) && await _roleManager.RoleExistsAsync(model.SelectedRole))
             {
-                case AdResultTypes.ServerUnavailable:
-                    ModelState.AddModelError("", "The Active Directory server is currently unavailable. Please contact administrator.");
-                    _logger.LogError("Active Directory server unavailable.");
-                    break;
-
-                case AdResultTypes.UserNotFound:
-                    ModelState.AddModelError("UserName", "Username does not exist in Active Directory.");
-                    _logger.LogWarning("Attempted to create user with non-existent AD username: {Username}", model.UserName);
-                    break;
-
-                default:
-                    ModelState.AddModelError("", $"Error validating username: {adUserResult.ErrorMessage}");
-                    _logger.LogError(adUserResult.Exception, "Error checking AD for username {Username}: {Message}",
-                        model.UserName, adUserResult.ErrorMessage);
-                    break;
+                await _userManager.AddToRoleAsync(user, model.SelectedRole);
             }
 
-            return View(model);
-        }*/
-
-        //dummy test user creation
-        var dummyAdUser = new ApplicationUser
-        {
-            UserName = model.UserName,
-            Email = $"{model.UserName}@domain.com",
-            FirstName = "Test",
-            LastName = "User",
-            IsActive = true
-        };
-
-        // Check if user already exists in database
-        var existingUser = await _accountRepo.FindByName(model.UserName);
-        if (existingUser != null)
-        {
-            ModelState.AddModelError("UserName", "A user with this username already exists in the system.");
-            return View(model);
+            TempData["Success"] = $"User '{user.UserName}' created and assigned to role '{model.SelectedRole}'.";
+            return RedirectToAction("Index");
         }
 
-        //var result = await _accountRepo.Create(adUserResult.AppUser);
-        var result = await _accountRepo.Create(dummyAdUser);
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
 
-        if (result)
-        {
-            TempData["SuccessMessage"] = $"User {model.UserName} was created successfully.";
-            _logger.LogInformation("User {UserName} was created successfully.", model.UserName);
-            return RedirectToAction(nameof(Index));
-        }
-        else
-        {
-            ModelState.AddModelError("", "Failed to create user. Please contact administrator.");
-            _logger.LogError("Failed to create user {UserName}.", model.UserName);
-            return View(model);
-        }
+        model.AvailableRoles = await _roleManager.Roles
+            .Select(r => new SelectListItem { Value = r.Name, Text = r.Name })
+            .ToListAsync();
+
+        return View(model);
     }
 
     [HttpGet]
@@ -205,18 +209,38 @@ public class AccountController(
             return RedirectToAction(nameof(Index));
         }
 
-        // Toggle active / disable state
-        if (!model.IsActive)
+        if (model.IsActive)
         {
-            userInfo.DisableDate = DateTime.UtcNow;
+            userInfo.IsActive = true;
+            userInfo.DisableDate = null;
+            userInfo.LockReason = null; // Clear lock reason when activating
+
+            // Clear ASP.NET Identity lockout date and reset access counter
+            await _userManager.SetLockoutEndDateAsync(userInfo, null);
+            await _userManager.ResetAccessFailedCountAsync(userInfo);
         }
         else
         {
-            userInfo.DisableDate = null;
+            userInfo.IsActive = false;
+            userInfo.DisableDate = DateTime.UtcNow;
+            userInfo.LockReason = model.LockReason; // Capture lock reason from model
+
+            // Lock ASP.NET Identity lockout end into the distant future
+            await _userManager.SetLockoutEndDateAsync(userInfo, DateTimeOffset.UtcNow.AddYears(100));
         }
 
-        // Map modified fields into domain entity
         _mapper.Map(model, userInfo);
+
+        userInfo.FirstName = string.IsNullOrWhiteSpace(userInfo.FirstName) ? userInfo.UserName : userInfo.FirstName;
+        userInfo.LastName = string.IsNullOrWhiteSpace(userInfo.LastName) ? "Staff" : userInfo.LastName;
+        userInfo.FullName = string.IsNullOrWhiteSpace(userInfo.FullName) ? $"{userInfo.FirstName} {userInfo.LastName}" : userInfo.FullName;
+        userInfo.Title = string.IsNullOrWhiteSpace(userInfo.Title) ? "N/A" : userInfo.Title;
+
+        userInfo.BusinessUnit = string.IsNullOrWhiteSpace(userInfo.BusinessUnit) ? "N/A" : userInfo.BusinessUnit;
+        userInfo.JobTitle = string.IsNullOrWhiteSpace(userInfo.JobTitle) ? "N/A" : userInfo.JobTitle;
+        userInfo.Station = string.IsNullOrWhiteSpace(userInfo.Station) ? "N/A" : userInfo.Station;
+        userInfo.AgeBracket = string.IsNullOrWhiteSpace(userInfo.AgeBracket) ? "N/A" : userInfo.AgeBracket;
+        userInfo.Gender = string.IsNullOrWhiteSpace(userInfo.Gender) ? "N/A" : userInfo.Gender;
 
         var result = await _accountRepo.Update(userInfo);
 
@@ -247,7 +271,6 @@ public class AccountController(
         TempData["ErrorMessage"] = "Failed to update user details. Please contact Administrator.";
         _logger.LogError("Failed to update user details for {UserName}.", model.UserName);
 
-        // Fetch database roles asynchronously first, then map in-memory
         var allRoles = await _roleManager.Roles.ToListAsync();
 
         model.RoleOptions = allRoles.Select(r => new SelectListItem
@@ -341,10 +364,6 @@ public class AccountController(
         TempData["ErrorMessage"] = "Failed to delete user account. Please contact Administrator.";
         return RedirectToAction(nameof(Index));
     }
-
-    // =========================================================
-    // IT ADMIN: ACCOUNT UNLOCK & PASSWORD ASSISTANCE
-    // =========================================================
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -491,5 +510,97 @@ public class AccountController(
 
         // 3. Redirect back to Login
         return RedirectToAction("Login", "Account");
+    }
+
+    // POST: User/ToggleLockout
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,ITSupport")]
+    public async Task<IActionResult> ToggleLockout(Guid userId, string? lockReason)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User account not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var isCurrentlyLocked = await _userManager.IsLockedOutAsync(user);
+
+        if (isCurrentlyLocked)
+        {
+            // Unlock user
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
+            user.LockReason = null;
+            user.IsActive = true;
+
+            TempData["SuccessMessage"] = $"Account for '{user.UserName}' has been unlocked.";
+        }
+        else
+        {
+            // Lock user until distant future date
+            await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
+            user.LockReason = string.IsNullOrWhiteSpace(lockReason) ? "Locked by IT Administrator." : lockReason;
+            user.IsActive = false;
+
+            TempData["SuccessMessage"] = $"Account for '{user.UserName}' has been locked.";
+        }
+
+        await _accountRepo.Update(user); // Save custom field changes
+        return RedirectToAction(nameof(Index));
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Settings()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        var model = new UserAccountSettingsViewModel
+        {
+            UserName = user.UserName ?? "N/A",
+            Email = user.Email ?? "N/A",
+            FullName = string.IsNullOrWhiteSpace(user.FullName) ? $"{user.FirstName} {user.LastName}" : user.FullName,
+            JobTitle = user.JobTitle,
+            BusinessUnit = user.BusinessUnit
+        };
+
+        return View(model);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(UserAccountSettingsViewModel model)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        // Re-populate profile data for returning the view if validation fails
+        model.UserName = user.UserName ?? "N/A";
+        model.Email = user.Email ?? "N/A";
+        model.FullName = string.IsNullOrWhiteSpace(user.FullName) ? $"{user.FirstName} {user.LastName}" : user.FullName;
+        model.JobTitle = user.JobTitle;
+        model.BusinessUnit = user.BusinessUnit;
+
+        if (!ModelState.IsValid) return View("Settings", model);
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+
+        if (result.Succeeded)
+        {
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["SuccessMessage"] = "Your password has been changed successfully.";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+
+        return View("Settings", model);
     }
 }

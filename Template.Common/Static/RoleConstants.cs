@@ -7,5 +7,8 @@
         public const string BudgetHolder = "Budget Holder";
         public const string BudgetAdmin = "Budget Admin";
         public const string BudgetAdminViewer = "Budget Admin Viewer";
+        public const string LegalStaff = "Legal Staff";
+        public const string LawFirm = "Law Firm";
     }
 }
+

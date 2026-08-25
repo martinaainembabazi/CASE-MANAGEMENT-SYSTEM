@@ -1,0 +1,183 @@
+﻿@model Template.Core.Models.Cases.DashboardViewModel
+@{
+    ViewData["Title"] = "Legal Staff Dashboard";
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Legal Operations Dashboard</h3>
+        <p class="text-muted mb-0">Overview of active cases, upcoming court hearings, and financial provisions</p>
+    </div>
+</div>
+
+<!-- Recently Created Cases Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title fw-bold mb-0">Recently Created Cases</h5>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">View All Cases</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.RecentCases)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@c.Title</td>
+                            <td>@(c.Type?.Name ?? "N/A")</td>
+                            <td>
+                                <span class="badge bg-info text-dark">@(c.Status?.Name ?? "Pending")</span>
+                            </td>
+                            <td>@c.DateCreated.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">
+                                    Manage Case
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Upcoming Hearings Schedule Widget -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title fw-bold mb-0"><i class="ti ti-calendar-event me-2 text-warning"></i>Upcoming Court Hearings</h5>
+                <span class="badge bg-warning text-dark">Next 5 Scheduled</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Case</th>
+                                <th>Court / Judge</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.UpcomingHearings.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">No upcoming hearings scheduled.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var h in Model.UpcomingHearings)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@h.HearingDate.ToString("dd MMM yyyy")</div>
+                                            <small class="text-muted">@h.HearingDate.ToString("HH:mm")</small>
+                                        </td>
+                                        <td class="fw-semibold">@h.CaseTitle</td>
+                                        <td>
+                                            <div>@h.CourtLocation</div>
+                                            <small class="text-muted">@h.JudgeOrMagistrate</small>
+                                        </td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-id="@h.CaseId" class="btn btn-sm btn-outline-primary">
+                                                View Case
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Notifications / Activity Feed Widget -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title fw-bold mb-0"><i class="ti ti-bell me-2 text-primary"></i>System Notifications & Updates</h5>
+            </div>
+            <div class="card-body">
+                @if (!Model.Notifications.Any())
+                {
+                    <p class="text-center text-muted py-4 mb-0">No recent system notifications.</p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var n in Model.Notifications)
+                        {
+                            <div class="list-group-item px-0 py-2 border-0 mb-2">
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge @n.BadgeClass me-2"><i class="@n.IconClass me-1"></i>@n.Title</span>
+                                    <small class="text-muted ms-auto">@n.Timestamp.ToString("dd MMM HH:mm")</small>
+                                </div>
+                                <p class="mb-0 small text-secondary">@n.Message</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small fw-bold text-uppercase">Total Cases</span>
+                <h3 class="fw-bold text-primary mb-0 mt-1">@Model.TotalCases</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small fw-bold text-uppercase">Active Assignments</span>
+                <h3 class="fw-bold text-success mb-0 mt-1">@Model.ActiveAssignments</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small fw-bold text-uppercase">Upcoming Hearings</span>
+                <h3 class="fw-bold text-warning mb-0 mt-1">@Model.UpcomingHearingsCount</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small fw-bold text-uppercase">Fees Paid</span>
+                <h3 class="fw-bold text-info mb-0 mt-1">@Model.TotalLegalFeesPaid.ToString("N0")</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small fw-bold text-uppercase">Total Provisions</span>
+                <h3 class="fw-bold text-secondary mb-0 mt-1">@Model.TotalFinancialProvisions.ToString("N0")</h3>
+            </div>
+        </div>
+    </div>
+</div>

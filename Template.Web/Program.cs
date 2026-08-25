@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,11 +8,18 @@ using System.Reflection;
 using Template.Core.Mappings;
 using Template.Core.Repository;
 using Template.Core.Repository.Cases;
+using Template.Core.Services;
 using Template.Core.Services.AdAuthentication;
 using Template.Data;
 using Template.Data.Configurations;
 using Template.Data.Entities;
+using Template.Web.Security;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<IClaimsTransformation, CustomClaimsTransformation>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Register Repositories
 builder.Services.AddScoped<ICaseRepository, CaseRepository>();

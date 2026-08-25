@@ -9,7 +9,7 @@ public class RoleRepository(ApplicationDbContext _db) : IRoleRepository
 {
     public async Task<ICollection<Role>> FindAll()
     {
-        return await _db.Roles.AsNoTracking().ToListAsync();
+        return await _db.Roles.Include(r => r.Users).AsNoTracking().ToListAsync();
     }
 
     public async Task<Role?> FindById(int id)

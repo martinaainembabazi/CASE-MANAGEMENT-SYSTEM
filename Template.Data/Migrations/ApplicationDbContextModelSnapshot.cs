@@ -163,11 +163,9 @@ namespace Template.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("AgeBracket")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BusinessUnit")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -202,7 +200,6 @@ namespace Template.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gender")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
@@ -212,7 +209,6 @@ namespace Template.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("JobTitle")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("LastActivity")
@@ -267,7 +263,6 @@ namespace Template.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Station")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
@@ -398,6 +393,9 @@ namespace Template.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ArchivedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
 
@@ -415,6 +413,9 @@ namespace Template.Data.Migrations
 
                     b.Property<bool>("IsArchived")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("LawFirmId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ModifiedBy")
                         .IsRequired()
@@ -436,6 +437,8 @@ namespace Template.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("LawFirmId");
 
                     b.HasIndex("StatusId");
 
@@ -474,6 +477,12 @@ namespace Template.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("InstructionsText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ModifiedBy")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -492,6 +501,50 @@ namespace Template.Data.Migrations
                     b.HasIndex("CaseId");
 
                     b.ToTable("CaseAssignments");
+                });
+
+            modelBuilder.Entity("Template.Data.Entities.CaseInstruction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CaseAssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateSent")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InstructionsText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("SentById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaseAssignmentId");
+
+                    b.HasIndex("SentById");
+
+                    b.ToTable("CaseInstructions");
                 });
 
             modelBuilder.Entity("Template.Data.Entities.CaseStatus", b =>
@@ -674,8 +727,16 @@ namespace Template.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FinancialYear")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("DateLogged")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FinancialYear")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Justification")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ModifiedBy")
                         .IsRequired()
@@ -683,6 +744,9 @@ namespace Template.Data.Migrations
 
                     b.Property<DateTime>("ModifiedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -702,6 +766,10 @@ namespace Template.Data.Migrations
                     b.Property<int>("CaseId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CourtLocation")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -709,8 +777,12 @@ namespace Template.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("HearingDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("JudgeOrMagistrate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ModifiedBy")
                         .IsRequired()
@@ -721,6 +793,12 @@ namespace Template.Data.Migrations
 
                     b.Property<string>("Outcome")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Purpose")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1160,6 +1238,10 @@ namespace Template.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Template.Data.Entities.LawFirm", "LawFirm")
+                        .WithMany("Cases")
+                        .HasForeignKey("LawFirmId");
+
                     b.HasOne("Template.Data.Entities.CaseStatus", "Status")
                         .WithMany("Cases")
                         .HasForeignKey("StatusId")
@@ -1173,6 +1255,8 @@ namespace Template.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("LawFirm");
 
                     b.Navigation("Status");
 
@@ -1209,6 +1293,25 @@ namespace Template.Data.Migrations
                     b.Navigation("AssignedUser");
 
                     b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Template.Data.Entities.CaseInstruction", b =>
+                {
+                    b.HasOne("Template.Data.Entities.CaseAssignment", "CaseAssignment")
+                        .WithMany("Instructions")
+                        .HasForeignKey("CaseAssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Template.Data.Entities.ApplicationUser", "SentBy")
+                        .WithMany()
+                        .HasForeignKey("SentById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CaseAssignment");
+
+                    b.Navigation("SentBy");
                 });
 
             modelBuilder.Entity("Template.Data.Entities.CaseUpdate", b =>
@@ -1377,6 +1480,11 @@ namespace Template.Data.Migrations
                     b.Navigation("Updates");
                 });
 
+            modelBuilder.Entity("Template.Data.Entities.CaseAssignment", b =>
+                {
+                    b.Navigation("Instructions");
+                });
+
             modelBuilder.Entity("Template.Data.Entities.CaseStatus", b =>
                 {
                     b.Navigation("Cases");
@@ -1390,6 +1498,8 @@ namespace Template.Data.Migrations
             modelBuilder.Entity("Template.Data.Entities.LawFirm", b =>
                 {
                     b.Navigation("CaseAssignments");
+
+                    b.Navigation("Cases");
 
                     b.Navigation("Lawyers");
 

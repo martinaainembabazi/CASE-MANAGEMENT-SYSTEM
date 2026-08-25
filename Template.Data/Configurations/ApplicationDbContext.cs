@@ -13,7 +13,6 @@ namespace Template.Data.Configurations
             : base(options)
         {
         }
-
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -138,11 +137,17 @@ namespace Template.Data.Configurations
                 .HasForeignKey(u => u.UpdatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<FinancialProvision>()
-                .HasOne(f => f.Case)
-                .WithMany(c => c.FinancialProvisions)
-                .HasForeignKey(f => f.CaseId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<FinancialProvision>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.FinancialYear).IsRequired().HasMaxLength(20);
+
+                entity.HasOne(e => e.Case)
+                      .WithMany(c => c.FinancialProvisions) 
+                      .HasForeignKey(e => e.CaseId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
 
             builder.Entity<Notification>()
                 .HasOne(n => n.User)
@@ -202,5 +207,7 @@ namespace Template.Data.Configurations
         public DbSet<Notification> Notifications { get; set; }
 
         public DbSet<OtherInstruction> OtherInstructions { get; set; }
+
+        public DbSet<CaseInstruction> CaseInstructions { get; set; }
     }
 }

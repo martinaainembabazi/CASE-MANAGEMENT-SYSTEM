@@ -1,41 +1,4 @@
-@* @using Template.Web.Models.Shared
-@{
-    Layout = null;
-
-    var dashboardView = "~/Views/Shared/Components/StaffDashboard/Default.cshtml";
-    object dashboardModel = new StaffDashboardModel();
-
-    if (User.IsInRole("Admin"))
-    {
-        dashboardView = "~/Views/Shared/Components/AdminDashboard/Default.cshtml";
-        dashboardModel = new AdminDashboardModel();
-    }
-    else if (User.IsInRole("InnovationTeam"))
-    {
-        dashboardView = "~/Views/Shared/Components/InnovationTeamDashboard/Default.cshtml";
-        dashboardModel = new InnovationDashboardModel();
-    }
-}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - Innovation Management Tracking System</title>
-    <link rel="stylesheet" href="~/css/tabler.min.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/theme_styles.min.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Template.Web.styles.css" asp-append-version="true" />
-</head>
-@await Html.PartialAsync(dashboardView, dashboardModel)
-<script src="https://unpkg.com/lucide@latest"></script>
-<script>lucide.createIcons();</script>
-</html> *@
-
-@*<div>testing</div>
-*@
-
-
+@using Template.Common.Static
 @model Template.Web.MyModels.DashboardViewModel
 @{
     Layout = "_Layout";
@@ -50,9 +13,9 @@
 </div>
 
 @* ========================================== *@
-@* 1. ADMIN SECTION                           *@
+@* 1. IT SUPPORT / ADMIN SECTION             *@
 @* ========================================== *@
-@if (User.IsInRole("Admin")||User.Identity?.Name=="admin")
+@if (User.IsInRole("Admin") || User.IsInRole(RoleConstants.ItSupport) || User.Identity?.Name == "admin")
 {
     <div class="row mb-4">
         <div class="col-12">
@@ -114,7 +77,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (Model.RecentAuditLogs.Any())
+                                @if (Model.RecentAuditLogs != null && Model.RecentAuditLogs.Any())
                                 {
                                     @foreach (var log in Model.RecentAuditLogs)
                                     {
@@ -158,9 +121,9 @@
 }
 
 @* ========================================== *@
-@* 2. LEGAL OFFICER / LAW FIRM SECTION         *@
+@* 2. LEGAL STAFF / LAW FIRM SECTION          *@
 @* ========================================== *@
-@if (User.IsInRole("LegalOfficer") || User.IsInRole("Admin") || User.IsInRole("LawFirm") || User.IsInRole("Lawyer"))
+@if (User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaff) || User.IsInRole(RoleConstants.LawFirm))
 {
     <div class="row mb-4">
         <div class="col-12">
@@ -186,7 +149,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (Model.UpcomingHearings.Any())
+                                @if (Model.UpcomingHearings != null && Model.UpcomingHearings.Any())
                                 {
                                     @foreach (var hearing in Model.UpcomingHearings)
                                     {
@@ -216,7 +179,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white fw-bold">Case Quick Actions</div>
                 <div class="card-body d-grid gap-2">
-                    @if (User.IsInRole("LegalOfficer") || User.IsInRole("Admin"))
+                    @if (User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaff))
                     {
                         <a href="/Case/Create" class="btn btn-danger text-start">
                             <i class="ti ti-plus me-2"></i> Register New Case
