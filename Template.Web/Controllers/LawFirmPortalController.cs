@@ -26,10 +26,10 @@ public class LawFirmPortalController : Controller
         var currentUser = await _context.Users
             .FirstOrDefaultAsync(u => u.Id.ToString() == userIdStr);
 
-        if (currentUser?.LawFirmId == null)
+        /*if (currentUser?.LawFirmId == null)
         {
             return Forbid();
-        }
+        }*/
 
         var assignedCases = await _context.CaseAssignments
             .Include(a => a.Case)

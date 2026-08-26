@@ -53,6 +53,7 @@ public class AccountController(
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(string username, string password, string returnUrl = null)
     {
         var result = await _authService.ValidateApplicationUser(username, password);
@@ -79,25 +80,27 @@ public class AccountController(
         await _authService.SignInApplicationUser(result.User);
         _logger.LogInformation("Login successful for user: {Username}", username);
 
+        // Prioritize returnUrl if explicitly passed
         if (Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);
         }
 
-        // Role-based dashboard redirection
-        if (User.IsInRole(RoleConstants.ItSupport))
+        var roles = await _userManager.GetRolesAsync(result.User);
+
+        if (roles.Contains(RoleConstants.ItSupport) || roles.Contains("Admin"))
         {
             return RedirectToAction("Dashboard", "Admin");
         }
 
-        if (User.IsInRole(RoleConstants.LawFirm))
-        {
-            return RedirectToAction("Dashboard", "LawFirmPortal");
-        }
-
-        if (User.IsInRole(RoleConstants.LegalStaff))
+        if (roles.Contains(RoleConstants.LegalStaff))
         {
             return RedirectToAction("Dashboard", "Case");
+        }
+
+        if (roles.Contains(RoleConstants.LawFirm))
+        {
+            return RedirectToAction("Dashboard", "LawFirmPortal");
         }
 
         // Default fallback if role is unspecified or standard user
@@ -602,5 +605,11 @@ public class AccountController(
         }
 
         return View("Settings", model);
+    }
+
+    [HttpGet]
+    public IActionResult AccessDenied()
+    {
+        return View();
     }
 }

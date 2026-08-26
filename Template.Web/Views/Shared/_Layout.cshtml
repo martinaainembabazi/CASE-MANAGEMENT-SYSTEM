@@ -28,6 +28,12 @@
 		.modal-cls-btn {
 			margin-left: 10px;
 		}
+
+            .sidebar-divider-top {
+                border-top: 1px solid rgba(255, 255, 255, 0.2); /* Soft semi-transparent hairline */
+                margin-top: 15px;
+                padding-top: 15px;
+            }
 	</style>
 </head>
 <body class="bg-gray-100">
@@ -104,7 +110,7 @@
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" asp-controller="LawFirmPortal" asp-action="Dashboard" aria-expanded="false">
                                         <span><i class="ti ti-layout-dashboard"></i></span>
-                                        <span class="hide-menu">Portal Dashboard</span>
+                                        <span class="hide-menu">Dashboard</span>
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
@@ -155,9 +161,13 @@
                             }
                         </div>
 
+                        <!-- DIVIDER LINE -->
+                        <li class="my-3">
+                            <hr class="sidebar-divider" />
+                         </li>
                        
                         <div class="mt-auto pt-3">
-                            <li class="sidebar-item">
+                            <li class="sidebar-item sidebar-divider-top">
                                 <a class="sidebar-link" asp-controller="Account" asp-action="Settings" aria-expanded="false">
                                     <span><i class="ti ti-settings"></i></span>
                                     <span class="hide-menu">Account Settings</span>
@@ -188,14 +198,6 @@
 							<li class="nav-item me-3">
 								<span class="text-muted small">Logged in as: <strong>@User.Identity?.Name</strong></span>
 							</li>
-							<li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline"> 
-                                     @Html.AntiForgeryToken()
-                                     <button type="submit" class="btn btn-outline-danger btn-sm">
-                                           Logout
-                                     </button>
-                                </form>
-                            </li>
 						</ul>
 					</div>
 				</nav>

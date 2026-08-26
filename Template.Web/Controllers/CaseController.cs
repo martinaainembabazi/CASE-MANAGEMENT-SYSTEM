@@ -461,7 +461,38 @@ public class CaseController(
         _context.CaseInstructions.Add(instruction);
         await _context.SaveChangesAsync();
 
-        TempData["Success"] = "Additional instructions sent.";
+        // 1. Fetch assignment details along with LawFirm and Case info
+        var assignment = await _context.CaseAssignments
+            .Include(ca => ca.Case)
+            .Include(ca => ca.AssignedLawFirm)
+            .FirstOrDefaultAsync(ca => ca.Id == assignmentId);
+
+        // 2. Dispatch email notification if assigned to a firm with a valid email
+        if (assignment?.AssignedLawFirm != null && !string.IsNullOrEmpty(assignment.AssignedLawFirm.Email))
+        {
+            var caseTitle = assignment.Case?.Title ?? $"CASE-{caseId:D4}";
+            var subject = $"New Instructions: {caseTitle}";
+
+            var message = $@"
+            <h3>Additional Case Instructions</h3>
+            <p><strong>Case:</strong> {caseTitle}</p>
+            <p><strong>Instructions Received:</strong></p>
+            <blockquote style='border-left: 4px solid #0056b3; padding-left: 12px; margin-left: 0; color: #333;'>
+                {instructionsText}
+            </blockquote>
+            <p>Please log in to your portal dashboard to acknowledge these instructions.</p>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(assignment.AssignedLawFirm.Email, subject, message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send instruction email for Case Assignment ID {AssignmentId}", assignmentId);
+            }
+        }
+
+        TempData["Success"] = "Additional instructions sent and notification emailed successfully.";
         return RedirectToAction(nameof(Details), new { id = caseId });
     }
 
