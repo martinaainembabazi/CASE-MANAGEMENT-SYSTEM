@@ -59,8 +59,8 @@
 
                         <!-- TOP SECTION: ROLE-SPECIFIC NAVIGATION -->
                         <div>
-                            <!-- LEGAL STAFF NAVIGATION -->
-                            @if (User.IsInRole(RoleConstants.LegalStaff))
+                            <!-- LEGAL OPERATIONS NAVIGATION  -->
+                            @if (User.IsInRole(RoleConstants.LegalStaffAdmin) || User.IsInRole(RoleConstants.LegalStaff))
                             {
                                 <li class="nav-small-cap">
                                     <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
@@ -78,12 +78,18 @@
                                         <span class="hide-menu">Cases & Matters</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" asp-controller="LawFirm" asp-action="Index" aria-expanded="false">
-                                        <span><i class="ti ti-building-bank"></i></span>
-                                        <span class="hide-menu">Law Firms</span>
-                                    </a>
-                                </li>
+
+                                <!-- Law Firm Management is visible here ONLY to Legal Staff Admin -->
+                                @if (User.IsInRole(RoleConstants.LegalStaffAdmin))
+                                {
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" asp-controller="LawFirm" asp-action="Index" aria-expanded="false">
+                                            <span><i class="ti ti-building-bank"></i></span>
+                                            <span class="hide-menu">Law Firms</span>
+                                        </a>
+                                    </li>
+                                }
+
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" asp-controller="Report" asp-action="Index" aria-expanded="false">
                                         <span><i class="ti ti-file-analytics"></i></span>
@@ -114,57 +120,66 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a class="sidebar-link" asp-controller="Case" asp-action="Index" aria-expanded="false">
+                                    <a class="sidebar-link" asp-controller="Case" asp-action="AssignedCases" aria-expanded="false">
                                         <span><i class="ti ti-file-text"></i></span>
                                         <span class="hide-menu">Assigned Cases</span>
                                     </a>
                                 </li>
                             }
 
-                            <!-- ACCOUNTS & ADMINISTRATION SECTION (IT Support / Admin) -->
-                            @if (User.IsInRole(RoleConstants.ItSupport) || User.IsInRole("Admin"))
+                            <!-- ACCOUNTS & ADMINISTRATION SECTION (IT Support, Admin, and Legal Staff Admin) -->
+                            @if (User.IsInRole(RoleConstants.ItSupport) || User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaffAdmin))
                             {
-                                <li class="nav-small-cap">
-                                    <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
-                                    <span class="hide-menu">ADMINISTRATION</span>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" asp-controller="Admin" asp-action="Dashboard" aria-expanded="false">
-                                        <span><i class="ti ti-layout-dashboard"></i></span>
-                                        <span class="hide-menu">Dashboard</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="/Account/" aria-expanded="false">
-                                        <span><i class="ti ti-users"></i></span>
-                                        <span class="hide-menu">User Accounts</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="/Role/" aria-expanded="false">
-                                        <span><i class="ti ti-shield"></i></span>
-                                        <span class="hide-menu">Roles & Rights</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
+                                
+                                @if (User.IsInRole(RoleConstants.ItSupport))
+                                {
+                                    <li class="nav-small-cap">
+                                        <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+                                        <span class="hide-menu">ADMINISTRATION</span>
+                                    </li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" asp-controller="Admin" asp-action="Dashboard" aria-expanded="false">
+                                            <span><i class="ti ti-layout-dashboard"></i></span>
+                                            <span class="hide-menu">Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="/Account/" aria-expanded="false">
+                                            <span><i class="ti ti-users"></i></span>
+                                            <span class="hide-menu">User Accounts</span>
+                                        </a>
+                                    </li>
+                                }
+                                
+                               @*<li class="sidebar-item">
                                     <a class="sidebar-link" asp-controller="LawFirm" asp-action="Index" aria-expanded="false">
                                         <span><i class="ti ti-building-bank"></i></span>
                                         <span class="hide-menu">Law Firms</span>
                                     </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="/AuditLog/" aria-expanded="false">
-                                        <span><i class="ti ti-list"></i></span>
-                                        <span class="hide-menu">Audit Trail</span>
-                                    </a>
-                                </li>
+                                </li>*@
+                                @if (User.IsInRole(RoleConstants.ItSupport) || User.IsInRole("Admin"))
+                                {
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="/Role/" aria-expanded="false">
+                                            <span><i class="ti ti-shield"></i></span>
+                                            <span class="hide-menu">Roles & Rights</span>
+                                        </a>
+                                    </li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="/AuditLog/" aria-expanded="false">
+                                            <span><i class="ti ti-list"></i></span>
+                                            <span class="hide-menu">Audit Trail</span>
+                                        </a>
+                                    </li>
+                                }
+                               
                             }
                         </div>
 
                         <!-- DIVIDER LINE -->
-                        <li class="my-3">
+                       @*<li class="my-3">
                             <hr class="sidebar-divider" />
-                         </li>
+                         </li>*@
                        
                         <div class="mt-auto pt-3">
                             <li class="sidebar-item sidebar-divider-top">

@@ -1,0 +1,71 @@
+﻿@model Template.Core.Models.Cases.CreateCounselViewModel
+
+@{
+    ViewData["Title"] = "Create Counsel User Account";
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0"><i class="ti ti-user-plus me-2"></i>Create Counsel User Account</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="CreateCounsel" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="LawFirmId" class="form-label fw-bold small">Select Law Firm</label>
+                            <select asp-for="LawFirmId" asp-items="Model.AvailableLawFirms" class="form-select" required>
+                                <option value="">-- Select Law Firm Name --</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FullName" class="form-label fw-bold small"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="e.g., Jane Doe" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label fw-bold small"></label>
+                                <input asp-for="PhoneNumber" class="form-control" placeholder="e.g., +256..." />
+                                <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-bold small"></label>
+                            <input asp-for="Email" class="form-control" placeholder="counsel@lawfirm.com" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label fw-bold small"></label>
+                                <input asp-for="Password" class="form-control" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label fw-bold small"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a asp-action="Index" class="btn btn-light">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="ti ti-check me-1"></i> Create Counsel Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

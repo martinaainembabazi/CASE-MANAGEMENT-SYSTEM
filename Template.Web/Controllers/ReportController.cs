@@ -9,7 +9,7 @@ using Template.ViewModels;
 
 namespace Template.Web.Controllers
 {
-    [Authorize(Roles = RoleConstants.LegalStaff + ",Admin," + RoleConstants.ItSupport)]
+    [Authorize(Roles = RoleConstants.LegalStaff + ",Admin," + RoleConstants.LegalStaffAdmin)]
     public class ReportController : Controller
     {
         private readonly ApplicationDbContext _context;

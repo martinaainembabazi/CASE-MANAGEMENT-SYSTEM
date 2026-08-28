@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Template.Core.Models.Document;
+using Template.Data.Entities; // Added to reference AssignmentType enum/entity
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Template.Core.Models.Cases;
 
@@ -33,10 +35,25 @@ public class CaseViewModel
 
     // Current Assignment Info
     public int? ActiveAssignmentId { get; set; }
+
+    // Assignment Type (Internal vs External)
+    public AssignmentType? CurrentAssignmentType { get; set; }
+    public string AssignmentTypeDisplay => CurrentAssignmentType switch
+    {
+        AssignmentType.Internal => "Internal Staff",
+        AssignmentType.External => "External Counsel",
+        _ => "Unassigned"
+    };
+
+    // External Assignment Info
     public int? AssignedLawFirmId { get; set; }
     public string? AssignedLawFirmName { get; set; }
     public string? AssignedLawyerId { get; set; }
     public string? AssignedLawyerName { get; set; }
+
+    // Internal Assignment Info
+    public Guid? AssignedToUserId { get; set; }
+    public string? AssignedToUserName { get; set; }
 
     public List<PaymentItemViewModel> Payments { get; set; } = new();
     public decimal TotalPayments => Payments.Sum(p => p.Amount);
@@ -47,6 +64,7 @@ public class CaseViewModel
     // Dropdowns for assignment
     public IEnumerable<SelectListItem>? AvailableLawFirms { get; set; }
     public IEnumerable<SelectListItem>? AvailableLawyers { get; set; }
+    public IEnumerable<SelectListItem>? AvailableLegalStaff { get; set; }
 
     // List of uploaded documents for rendering
     public IEnumerable<DocumentItemViewModel> Documents { get; set; } = new List<DocumentItemViewModel>();

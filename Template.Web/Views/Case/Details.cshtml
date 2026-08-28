@@ -1,4 +1,5 @@
 ﻿@model Template.Core.Models.Cases.CaseViewModel
+@using Template.Data.Entities
 
 @{
     ViewData["Title"] = $"Case #{Model.Id} Details";
@@ -155,7 +156,9 @@
                 <h5 class="card-title mb-0">Case Assignment</h5>
                 @if (Model.ActiveAssignmentId.HasValue)
                 {
-                    <span class="badge bg-light text-primary fw-bold">Assigned</span>
+                    <span class="badge bg-light text-primary fw-bold">
+                        @(Model.CurrentAssignmentType == AssignmentType.Internal ? "Assigned (Internal)" : "Assigned (External)")
+                    </span>
                 }
                 else
                 {
@@ -163,19 +166,34 @@
                 }
             </div>
             <div class="card-body">
-                <!-- Current Assigned Law Firm & Unassign Action -->
+                <!-- Current Assignee & Unassign Action -->
                 <div class="mb-3 d-flex justify-content-between align-items-start">
                     <div>
-                        <strong class="text-muted small">Assigned Law Firm:</strong><br />
+                        <strong class="text-muted small">Current Assignee:</strong><br />
                         <span class="fs-6 fw-bold text-dark">
-                            @(string.IsNullOrEmpty(Model.AssignedLawFirmName) ? "None Assigned" : Model.AssignedLawFirmName)
+                            @if (Model.CurrentAssignmentType == AssignmentType.Internal)
+                            {
+                                <i class="ti ti-user me-1 text-primary"></i> 
+                                @(string.IsNullOrEmpty(Model.AssignedToUserName) ? "Unassigned" : Model.AssignedToUserName)
+                                <span class="badge bg-info-subtle text-info border ms-1">Staff</span>
+                            }
+                            else if (Model.CurrentAssignmentType == AssignmentType.External)
+                            {
+                                <i class="ti ti-building me-1 text-primary"></i> 
+                                @(string.IsNullOrEmpty(Model.AssignedLawFirmName) ? "Unassigned" : Model.AssignedLawFirmName)
+                                <span class="badge bg-secondary-subtle text-secondary border ms-1">Law Firm</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">None Assigned</span>
+                            }
                         </span>
                     </div>
 
-                    @if (Model.ActiveAssignmentId.HasValue)
+                    @if (Model.ActiveAssignmentId.HasValue && (User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaffAdmin)))
                     {
                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#unassignModal">
-                            <i class="ti ti-user-x me-1"></i> Unassign
+                            <i class="ti ti-user-x me-1"></i> Revoke
                         </button>
                     }
                 </div>
@@ -223,82 +241,132 @@
                     <hr class="my-3" />
                 }
 
-                <!-- Assign / Reassign Accordion -->
-                <div class="accordion" id="assignmentAccordion">
-                    <div class="accordion-item border-0">
-                        <h2 class="accordion-header" id="headingAssign">
-                            <button class="accordion-button collapsed px-0 py-1 bg-transparent text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAssign">
-                                <i class="ti ti-building me-1"></i> @(Model.ActiveAssignmentId.HasValue ? "Reassign Law Firm" : "Assign Law Firm")
-                            </button>
-                        </h2>
-                        <div id="collapseAssign" class="accordion-collapse collapse" data-bs-parent="#assignmentAccordion">
-                            <div class="accordion-body px-0 pt-2">
-                                <form asp-action="AssignLawFirm" asp-controller="Case" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="caseId" value="@Model.Id" />
+                <!-- Assign / Reassign Accordion (Admin & LegalStaffAdmin Only) -->
+                @if (User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaffAdmin))
+                {
+                    <div class="accordion" id="assignmentAccordion">
+                        <div class="accordion-item border-0">
+                            <h2 class="accordion-header" id="headingAssign">
+                                <button class="accordion-button collapsed px-0 py-1 bg-transparent text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAssign">
+                                    <i class="ti ti-user-plus me-1"></i> @(Model.ActiveAssignmentId.HasValue ? "Reassign Case" : "Assign Case")
+                                </button>
+                            </h2>
+                            <div id="collapseAssign" class="accordion-collapse collapse" data-bs-parent="#assignmentAccordion">
+                                <div class="accordion-body px-0 pt-2">
+                                    <form asp-action="AssignCase" asp-controller="Case" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="caseId" value="@Model.Id" />
 
-                                    <div class="mb-2">
-                                        <label class="form-label small fw-bold">Select Law Firm</label>
-                                        <select name="lawFirmId" asp-items="Model.AvailableLawFirms" class="form-select form-select-sm" required>
-                                            <option value="">-- Select Law Firm --</option>
-                                        </select>
-                                    </div>
+                                        <!-- Assignment Type Radio Selector -->
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold d-block">Assignment Scope</label>
+                                            <div class="btn-group w-100" role="group">
+                                                <input type="radio" class="btn-check" name="assignmentType" id="typeInternal" value="@((int)AssignmentType.Internal)" checked onchange="toggleAssignmentDropdowns()">
+                                                <label class="btn btn-outline-primary btn-sm" for="typeInternal"><i class="ti ti-user me-1"></i> Internal Staff</label>
 
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-bold">Initial Instructions</label>
-                                        <textarea name="initialInstructions" class="form-control form-control-sm" rows="2" placeholder="Initial case notes or directions..."></textarea>
-                                    </div>
+                                                <input type="radio" class="btn-check" name="assignmentType" id="typeExternal" value="@((int)AssignmentType.External)" onchange="toggleAssignmentDropdowns()">
+                                                <label class="btn btn-outline-primary btn-sm" for="typeExternal"><i class="ti ti-building me-1"></i> External Counsel</label>
+                                            </div>
+                                        </div>
 
-                                    <button type="submit" class="btn btn-sm btn-primary w-100">
-                                        Confirm & Assign
-                                    </button>
-                                </form>
+                                        <!-- Internal Legal Staff Select -->
+                                        <div class="mb-2" id="internalAssignContainer">
+                                            <label class="form-label small fw-bold">Select Legal Staff</label>
+                                            <select name="assignedUserId" asp-items="Model.AvailableLegalStaff" class="form-select form-select-sm" id="legalStaffSelect">
+                                                <option value="">-- Select Legal Staff Member --</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- External Law Firm Select -->
+                                        <div class="mb-2 d-none" id="externalAssignContainer">
+                                            <label class="form-label small fw-bold">Select Law Firm</label>
+                                            <select name="lawFirmId" asp-items="Model.AvailableLawFirms" class="form-select form-select-sm" id="lawFirmSelect">
+                                                <option value="">-- Select Law Firm --</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Initial Instructions</label>
+                                            <textarea name="initialInstructions" class="form-control form-control-sm" rows="2" placeholder="Initial case notes or directions..."></textarea>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                                            Confirm & Assign Case
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
+                }
             </div>
         </div>
     </div>
 
-</div>
+    <!-- Revoke/Unassign Confirmation Modal -->
+    @if (Model.ActiveAssignmentId.HasValue && (User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaffAdmin)))
+    {
+        <div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form asp-action="UnassignCase" asp-controller="Case" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="caseId" value="@Model.Id" />
+                        <input type="hidden" name="assignmentId" value="@Model.ActiveAssignmentId" />
 
-<!-- Unassign Confirmation Modal -->
-@if (Model.ActiveAssignmentId.HasValue)
-{
-    <div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form asp-action="UnassignLawFirm" asp-controller="Case" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="caseId" value="@Model.Id" />
-                    <input type="hidden" name="assignmentId" value="@Model.ActiveAssignmentId" />
-
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="unassignModalLabel">Confirm Unassignment</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <p>Are you sure you want to recall and unassign this case from <strong>@Model.AssignedLawFirmName</strong>?</p>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Reason for Unassignment / Recall</label>
-                            <textarea name="reason" class="form-control form-control-sm" rows="3" placeholder="Provide reason or remarks for recalling the case..." required></textarea>
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="unassignModalLabel">Confirm Revocation</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                    </div>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-sm btn-danger">Unassign & Notify Firm</button>
-                    </div>
-                </form>
+                        <div class="modal-body">
+                            <p>
+                                Are you sure you want to revoke this case assignment from
+                                <strong>
+                                    @(Model.CurrentAssignmentType == AssignmentType.Internal ? Model.AssignedToUserName : Model.AssignedLawFirmName)
+                                </strong>?
+                            </p>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Reason for Revocation / Recall</label>
+                                <textarea name="reason" class="form-control form-control-sm" rows="3" placeholder="Provide reason or remarks for recalling the case..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-danger">Revoke & Update Case</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-}
-<!-- Legal Fees / Payments Section -->
+    }
+
+    <script>
+            function toggleAssignmentDropdowns() {
+                const isInternal = document.getElementById('typeInternal').checked;
+                const internalContainer = document.getElementById('internalAssignContainer');
+                const externalContainer = document.getElementById('externalAssignContainer');
+                const staffSelect = document.getElementById('legalStaffSelect');
+                const firmSelect = document.getElementById('lawFirmSelect');
+
+                if (isInternal) {
+                    internalContainer.classList.remove('d-none');
+                    externalContainer.classList.add('d-none');
+                    staffSelect.setAttribute('required', 'required');
+                    firmSelect.removeAttribute('required');
+                    firmSelect.value = '';
+                } else {
+                    externalContainer.classList.remove('d-none');
+                    internalContainer.classList.add('d-none');
+                    firmSelect.setAttribute('required', 'required');
+                    staffSelect.removeAttribute('required');
+                    staffSelect.value = '';
+                }
+            }
+    </script>
+    <!-- Legal Fees / Payments Section -->
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold"><i class="ti ti-receipt me-2"></i>Legal Fees & Payments</h5>

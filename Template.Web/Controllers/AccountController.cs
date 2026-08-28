@@ -93,6 +93,11 @@ public class AccountController(
             return RedirectToAction("Dashboard", "Admin");
         }
 
+        if (roles.Contains(RoleConstants.LegalStaffAdmin))
+        {
+            return RedirectToAction("Dashboard", "Case");
+        }
+
         if (roles.Contains(RoleConstants.LegalStaff))
         {
             return RedirectToAction("Dashboard", "Case");

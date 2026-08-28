@@ -48,18 +48,19 @@ namespace Template.Data
 
             var adminRole = await EnsureRoleExistsAsync("Admin", "System Administrator");
             var itSupportRole = await EnsureRoleExistsAsync(RoleConstants.ItSupport, "IT Support Administrator");
+            var legalStaffAdminRole = await EnsureRoleExistsAsync(RoleConstants.LegalStaffAdmin, "Legal Department Administrator");
             var legalStaffRole = await EnsureRoleExistsAsync(RoleConstants.LegalStaff, "Legal Department Staff");
             var lawFirmRole = await EnsureRoleExistsAsync(RoleConstants.LawFirm, "External Counsel & Law Firm");
 
             // 2. Helper to seed user with int RoleId
             async Task SeedUserAsync(
-     string username,
-     string email,
-     string fullName,
-     string businessUnit,
-     string jobTitle,
-     Role role,
-     string password)
+                string username,
+                string email,
+                string fullName,
+                string businessUnit,
+                string jobTitle,
+                Role role,
+                string password)
             {
                 var user = await userManager.FindByNameAsync(username);
                 if (user == null)
@@ -101,6 +102,7 @@ namespace Template.Data
             // 3. Execute Seeding
             await SeedUserAsync("admin", "admin@cms.local", "System Administrator", "Administration", "System Administrator", adminRole, "Admin@123");
             await SeedUserAsync("itsupport", "itsupport@bou.or.ug", "IT Support Officer", "IT Department", "IT Support Specialist", itSupportRole, "Admin@123");
+            await SeedUserAsync("legaladmin", "legaladmin@bou.or.ug", "Senior Legal Administrator", "Legal Department", "Legal Admin Officer", legalStaffAdminRole, "Admin@123");
             await SeedUserAsync("legalstaff", "legalstaff@bou.or.ug", "Legal Counsel", "Legal Department", "Legal Officer", legalStaffRole, "Admin@123");
             await SeedUserAsync("counsel", "counsel@lawfirm.com", "External Counsel", "External Law Firm", "Managing Partner", lawFirmRole, "Admin@123");
         }

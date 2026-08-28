@@ -1,7 +1,8 @@
 ﻿
 using AutoMapper;
-using Template.Data.Entities;
 using Template.Core.Models.Cases;
+using Template.Core.Models.Document;
+using Template.Data.Entities;
 
 namespace Template.Core.Mappings;
 
@@ -17,5 +18,7 @@ public class CasesAutoMapperProfile : Profile
 
         // View Model -> Domain Entity (Used for Create & Update actions)
         CreateMap<CaseViewModel, Case>();
+
+        CreateMap<Document, DocumentItemViewModel>();
     }
 }

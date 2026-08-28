@@ -1,16 +1,18 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SmartBreadcrumbs.Attributes;
 using System.Security.Claims;
+using Template.Common.Static;
 using Template.Core.Models.Cases;
 using Template.Core.Models.Document;
 using Template.Core.Repository.Cases;
+using Template.Core.Services;
 using Template.Data.Configurations;
 using Template.Data.Entities;
-using Template.Core.Services;
 
 namespace Template.Web.Controllers;
 
@@ -20,10 +22,12 @@ public class CaseController(
     ICaseRepository _caseRepo,
     IMapper _mapper,
     IEmailService _emailService,
-    ApplicationDbContext _context
+    ApplicationDbContext _context,
+    UserManager<ApplicationUser> _userManager
     ) : Controller
 {
     [HttpGet]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
     public async Task<IActionResult> Dashboard()
     {
         var today = DateTime.UtcNow;
@@ -122,161 +126,163 @@ public class CaseController(
     }
 
     [Breadcrumb("Cases & Matters", FromAction = nameof(Index), FromController = typeof(HomeController))]
-    [Authorize(Roles = RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
     public async Task<IActionResult> Index()
     {
-        var cases = await _caseRepo.FindAll();
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid.TryParse(userIdString, out Guid currentUserId);
 
-        // Filter out archived cases so only active cases are shown
-        var viewModels = cases
+        // Fetch cases including active assignments
+        var cases = await _context.Cases
             .Where(c => !c.IsArchived)
-            .Select(c => new CaseViewModel
+            .Include(c => c.Type)
+            .Include(c => c.Status)
+            .Include(c => c.Hearings)
+            .Include(c => c.Documents)
+            .Include(c => c.Assignments)
+                .ThenInclude(a => a.AssignedLawFirm)
+            .Include(c => c.Assignments)
+                .ThenInclude(a => a.AssignedUser)
+            .ToListAsync();
+
+        IEnumerable<Case> filteredCases = cases;
+
+        // 1. External Counsel Filter
+        if (User.IsInRole(RoleConstants.LawFirm))
+        {
+            // Query database directly to guarantee LawFirmId is populated
+            var currentUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
+
+            if (currentUser?.LawFirmId != null)
+            {
+                filteredCases = cases.Where(c => c.Assignments != null && c.Assignments.Any(a =>
+                    a.IsActive &&
+                    a.AssignmentType == AssignmentType.External &&
+                    a.AssignedLawFirmId == currentUser.LawFirmId));
+            }
+            else
+            {
+                filteredCases = Enumerable.Empty<Case>();
+            }
+        }
+        // 2. Regular Legal Staff Filter
+        else if (User.IsInRole(RoleConstants.LegalStaff) && !User.IsInRole(RoleConstants.LegalStaffAdmin) && !User.IsInRole("Admin"))
+        {
+            filteredCases = cases.Where(c => c.Assignments != null && c.Assignments.Any(a =>
+                a.IsActive &&
+                a.AssignmentType == AssignmentType.Internal &&
+                a.AssignedUserId == currentUserId));
+        }
+        // 3. Admin & LegalStaffAdmin pass through with access to all active cases
+
+        var viewModels = filteredCases.Select(c =>
+        {
+            var activeAssignment = c.Assignments?.FirstOrDefault(a => a.IsActive);
+            return new CaseViewModel
             {
                 Id = c.Id,
                 Title = c.Title,
                 Description = c.Description,
                 DateCreated = c.DateCreated,
-                TypeId = c.TypeId,
                 TypeName = c.Type?.Name ?? "Unassigned",
-                StatusId = c.StatusId,
                 StatusName = c.Status?.Name ?? "Pending",
-                CreatedBy = c.CreatedBy,
-                CreatedByName = c.CreatedByUser?.UserName ?? "System",
-                IsArchived = c.IsArchived,
-                DateClosed = c.DateClosed,
                 HearingCount = c.Hearings?.Count ?? 0,
                 DocumentCount = c.Documents?.Count ?? 0,
-                AssignmentCount = c.Assignments?.Count ?? 0
-            }).ToList();
+                AssignmentCount = c.Assignments?.Count ?? 0,
+                CurrentAssignmentType = activeAssignment?.AssignmentType,
+                AssignedLawFirmName = activeAssignment?.AssignedLawFirm?.Name,
+                AssignedToUserName = activeAssignment?.AssignedUser?.FullName
+            };
+        }).ToList();
 
         return View(viewModels);
     }
 
     [Breadcrumb("Case Details", FromAction = nameof(Index))]
-    [Authorize(Roles = RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
     public async Task<IActionResult> Details(int id)
     {
-        var caseEntity = await _caseRepo.FindById(id);
-        if (caseEntity == null)
+        var legalCase = await _context.Cases
+            .Include(c => c.Type)
+            .Include(c => c.Status)
+            .Include(c => c.Assignments)
+                .ThenInclude(a => a.AssignedLawFirm)
+            .Include(c => c.Assignments)
+                .ThenInclude(a => a.AssignedUser)
+            .Include(c => c.Hearings)
+            .Include(c => c.Documents)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (legalCase == null) return NotFound();
+
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid.TryParse(userIdString, out Guid currentUserId);
+
+        var activeAssignment = legalCase.Assignments.FirstOrDefault(a => a.IsActive);
+
+        // Security Check: Law Firm Role
+        if (User.IsInRole(RoleConstants.LawFirm))
         {
-            return NotFound();
+            var currentUser = await _userManager.FindByIdAsync(userIdString!);
+            bool isAssignedToFirm = activeAssignment != null &&
+                                   activeAssignment.AssignmentType == AssignmentType.External &&
+                                   activeAssignment.AssignedLawFirmId == currentUser?.LawFirmId;
+
+            if (!isAssignedToFirm)
+            {
+                return Forbid(); // Or RedirectToAction("AccessDenied", "Account");
+            }
+        }
+        // Security Check: Legal Staff Role
+        else if (User.IsInRole(RoleConstants.LegalStaff) && !User.IsInRole(RoleConstants.LegalStaffAdmin) && !User.IsInRole("Admin"))
+        {
+            bool isAssignedToUser = activeAssignment != null &&
+                                    activeAssignment.AssignmentType == AssignmentType.Internal &&
+                                    activeAssignment.AssignedUserId == currentUserId;
+
+            if (!isAssignedToUser)
+            {
+                return Forbid();
+            }
         }
 
-        var lawFirms = await _context.LawFirms
-            .Select(f => new SelectListItem
-            {
-                Value = f.Id.ToString(),
-                Text = f.Name
-            })
-            .ToListAsync();
-
-        var activeAssignment = await _context.CaseAssignments
-            .Include(a => a.AssignedLawFirm)
-            .Include(a => a.Instructions)
-                .ThenInclude(i => i.SentBy)
-            .Where(a => a.CaseId == id)
-            .OrderByDescending(a => a.AssignedDate)
-            .FirstOrDefaultAsync();
-
-        // Fetch milestones dropdown list 
-        ViewBag.Milestones = await _context.PaymentMilestones.ToListAsync();
-
-        var viewModel = new CaseViewModel
+        // Map CaseViewModel as usual...
+        var model = new CaseViewModel
         {
-            Id = caseEntity.Id,
-            Title = caseEntity.Title,
-            Description = caseEntity.Description,
-            DateCreated = caseEntity.DateCreated,
-            TypeId = caseEntity.TypeId,
-            TypeName = caseEntity.Type?.Name ?? "Unassigned",
-            StatusId = caseEntity.StatusId,
-            StatusName = caseEntity.Status?.Name ?? "Pending",
-            CreatedBy = caseEntity.CreatedBy,
-            CreatedByName = caseEntity.CreatedByUser?.UserName ?? "System",
-            IsArchived = caseEntity.IsArchived,
-            DateClosed = caseEntity.DateClosed,
-            HearingCount = caseEntity.Hearings?.Count ?? 0,
-            DocumentCount = caseEntity.Documents?.Count ?? 0,
-            AssignmentCount = caseEntity.Assignments?.Count ?? 0,
-
+            Id = legalCase.Id,
+            Title = legalCase.Title,
+            Description = legalCase.Description,
+            DateCreated = legalCase.DateCreated,
+            TypeName = legalCase.Type?.Name ?? "Unassigned",
+            StatusName = legalCase.Status?.Name ?? "Pending",
             ActiveAssignmentId = activeAssignment?.Id,
+            CurrentAssignmentType = activeAssignment?.AssignmentType,
+            AssignedToUserId = activeAssignment?.AssignedUserId,
+            AssignedToUserName = activeAssignment?.AssignedUser?.FullName,
             AssignedLawFirmId = activeAssignment?.AssignedLawFirmId,
-            AssignedLawFirmName = activeAssignment?.AssignedLawFirm?.Name ?? "N/A",
-            AvailableLawFirms = lawFirms,
-
-            InstructionHistory = activeAssignment?.Instructions?
-                .OrderByDescending(i => i.DateSent)
-                .Select(i => new InstructionItemViewModel
-                {
-                    Id = i.Id,
-                    InstructionsText = i.InstructionsText,
-                    DateSent = i.DateSent,
-                    SentByName = i.SentBy?.UserName ?? "System"
-                }).ToList() ?? new List<InstructionItemViewModel>(),
-
-            Documents = caseEntity.Documents?.Select(d => new DocumentItemViewModel
-            {
-                Id = d.Id,
-                FileName = d.FileName,
-                FilePath = d.FilePath,
-                FileType = d.FileType,
-                UploadDate = d.UploadDate,
-                Description = d.Description,
-                UploadedByName = d.UploadedByUser?.UserName ?? "System"
-            }).ToList() ?? new List<DocumentItemViewModel>()
+            AssignedLawFirmName = activeAssignment?.AssignedLawFirm?.Name
         };
 
-        // Fetch payments recorded for this case
-        viewModel.Payments = await _context.Payments
-            .Include(p => p.PaymentMilestone)
-            .Where(p => p.CaseId == id)
-            .OrderByDescending(p => p.PaymentDate)
-            .Select(p => new PaymentItemViewModel
-            {
-                Id = p.Id,
-                MilestoneName = p.PaymentMilestone != null ? p.PaymentMilestone.Name : "Unspecified",
-                Amount = p.Amount,
-                PaymentDate = p.PaymentDate,
-                Description = p.Description
-            })
-            .ToListAsync();
+        // Populate dropdowns for Admins/LegalStaffAdmins
+        if (User.IsInRole("Admin") || User.IsInRole(RoleConstants.LegalStaffAdmin))
+        {
+            model.AvailableLawFirms = await _context.LawFirms
+                .Select(f => new SelectListItem { Value = f.Id.ToString(), Text = f.Name })
+                .ToListAsync();
 
-        // Fetch financial provisions recorded for this case
-        viewModel.FinancialProvisions = await _context.FinancialProvisions
-            .Where(p => p.CaseId == id)
-            .OrderByDescending(p => p.DateLogged)
-            .Select(p => new FinancialProvisionItemViewModel
-            {
-                Id = p.Id,
-                FinancialYear = p.FinancialYear,
-                Amount = p.Amount,
-                Justification = p.Justification,
-                Status = p.Status.ToString(),
-                DateLogged = p.DateLogged
-            })
-            .ToListAsync();
+            model.AvailableLegalStaff = await _context.Users
+                .Where(u => u.IsActive)
+                .Select(u => new SelectListItem { Value = u.Id.ToString(), Text = u.FullName })
+                .ToListAsync();
+        }
 
-        viewModel.Hearings = await _context.Hearings
-    .Where(h => h.CaseId == id)
-    .OrderBy(h => h.HearingDate)
-    .Select(h => new HearingItemViewModel
-    {
-        Id = h.Id,
-        HearingDate = h.HearingDate,
-        CourtLocation = h.CourtLocation,
-        JudgeOrMagistrate = h.JudgeOrMagistrate,
-        Purpose = h.Purpose,
-        Outcome = h.Outcome,
-        Status = h.Status.ToString()
-    })
-    .ToListAsync();
-
-        return View(viewModel);
+        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff + "," + RoleConstants.LawFirm)]
     public async Task<IActionResult> UploadDocument(UploadDocumentViewModel model)
     {
         if (!ModelState.IsValid || model.File == null || model.File.Length == 0)
@@ -327,118 +333,165 @@ public class CaseController(
         return RedirectToAction(nameof(Details), new { id = model.CaseId });
     }
 
-    // 1. Assign Case to Law Firm
+    // POST: Case/AssignCase
     [HttpPost]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
-    public async Task<IActionResult> AssignLawFirm(int caseId, int lawFirmId, string? initialInstructions)
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin)]
+    public async Task<IActionResult> AssignCase(
+    int caseId,
+    AssignmentType assignmentType,
+    int? lawFirmId,
+    Guid? assignedUserId,
+    string? initialInstructions)
     {
         var legalCase = await _context.Cases.FindAsync(caseId);
-        var lawFirm = await _context.LawFirms.FindAsync(lawFirmId);
+        if (legalCase == null) return NotFound();
 
-        if (legalCase == null || lawFirm == null)
+        // Validation based on assignment type
+        if (assignmentType == AssignmentType.External && !lawFirmId.HasValue)
         {
-            return NotFound();
+            TempData["Error"] = "Please select a law firm for external assignment.";
+            return RedirectToAction("Details", new { id = caseId });
         }
 
-        // 1. Update LawFirmId on Case
-        legalCase.LawFirmId = lawFirmId;
+        if (assignmentType == AssignmentType.Internal && !assignedUserId.HasValue)
+        {
+            TempData["Error"] = "Please select a legal staff member for internal assignment.";
+            return RedirectToAction("Details", new { id = caseId });
+        }
 
-        // 2. Create the CaseAssignment record so the dashboard/card recognizes active status
+        // Deactivate previous active assignments for this case
+        var existingAssignments = await _context.CaseAssignments
+            .Where(a => a.CaseId == caseId && a.IsActive)
+            .ToListAsync();
+
+        foreach (var assignment in existingAssignments)
+        {
+            assignment.IsActive = false;
+        }
+
+        // Build the new assignment record
         var newAssignment = new CaseAssignment
         {
             CaseId = caseId,
-            AssignedLawFirmId = lawFirmId,
-            AssignedDate = DateTime.UtcNow, // Adjust property name if using 'AssignedDate' or 'CreatedDate'
+            AssignmentType = assignmentType,
+            AssignedDate = DateTime.UtcNow,
+            IsActive = true,
             InstructionsText = initialInstructions ?? "Case assigned."
         };
 
-        _context.CaseAssignments.Add(newAssignment);
-
-        // Save changes to generate assignment ID and link entities
-        await _context.SaveChangesAsync();
-
-        // 3. Dispatch Email Notification
-        if (!string.IsNullOrEmpty(lawFirm.Email))
+        if (assignmentType == AssignmentType.External)
         {
-            try
-            {
-                string subject = $"New Case Assignment: {legalCase.Title}";
-                string body = $@"
-                <h3>Case Assignment Notification</h3>
-                <p>Dear {lawFirm.Name},</p>
-                <p>You have been assigned legal case: <strong>{legalCase.Title}</strong>.</p>
-                <p><strong>Initial Instructions:</strong> {initialInstructions ?? "None provided."}</p>
-                <p>Please log in to your dashboard to access case details.</p>";
+            var lawFirm = await _context.LawFirms.FindAsync(lawFirmId.Value);
+            if (lawFirm == null) return NotFound();
 
-                await _emailService.SendEmailAsync(lawFirm.Email, subject, body);
-                TempData["Success"] = "Case successfully assigned to law firm!";
-            }
-            catch (Exception)
+            legalCase.LawFirmId = lawFirmId;
+            newAssignment.AssignedLawFirmId = lawFirmId;
+            newAssignment.AssignedUserId = null;
+
+            _context.CaseAssignments.Add(newAssignment);
+            await _context.SaveChangesAsync();
+
+            // Send email notification to Law Firm
+            if (!string.IsNullOrEmpty(lawFirm.Email))
             {
-                TempData["Warning"] = "Case assigned successfully, but email dispatch failed.";
+                try
+                {
+                    string subject = $"New External Case Assignment: {legalCase.Title}";
+                    string body = $@"
+                    <h3>Case Assignment Notification</h3>
+                    <p>Dear {lawFirm.Name},</p>
+                    <p>You have been assigned legal case: <strong>{legalCase.Title}</strong>.</p>
+                    <p><strong>Initial Instructions:</strong> {initialInstructions ?? "None provided."}</p>
+                    <p>Please log in to your dashboard to access case details.</p>";
+
+                    await _emailService.SendEmailAsync(lawFirm.Email, subject, body);
+                    TempData["Success"] = $"Case successfully assigned externally to {lawFirm.Name}!";
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send assignment email to law firm {LawFirmId}", lawFirmId);
+                    TempData["Warning"] = "Case assigned successfully, but email dispatch failed.";
+                }
             }
+        }
+        else // Internal Assignment
+        {
+            var staffUser = await _context.Users.FindAsync(assignedUserId.Value);
+            if (staffUser == null) return NotFound();
+
+            legalCase.LawFirmId = null; // Unlink external firm if switching to internal
+            newAssignment.AssignedUserId = assignedUserId;
+            newAssignment.AssignedLawFirmId = null;
+
+            _context.CaseAssignments.Add(newAssignment);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Case successfully assigned internally to {staffUser.FullName}!";
         }
 
         return RedirectToAction("Details", new { id = caseId });
     }
 
-    // 2. Unassign Case from Law Firm
+    // POST: Case/UnassignCase
     [HttpPost]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
-    public async Task<IActionResult> UnassignLawFirm(int caseId, int? assignmentId, string reason)
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin)]
+    public async Task<IActionResult> UnassignCase(int caseId, int? assignmentId, string reason)
     {
-        // 1. Fetch case record
         var legalCase = await _context.Cases
             .Include(c => c.LawFirm)
             .FirstOrDefaultAsync(c => c.Id == caseId);
 
-        if (legalCase == null)
-        {
-            return NotFound();
-        }
+        if (legalCase == null) return NotFound();
 
-        // 2. Fetch the assignment record
+        // Fetch active assignment
         var assignment = await _context.CaseAssignments
             .Include(a => a.AssignedLawFirm)
-            .FirstOrDefaultAsync(a => (assignmentId.HasValue && a.Id == assignmentId.Value) || a.CaseId == caseId);
+            .Include(a => a.AssignedUser)
+            .FirstOrDefaultAsync(a => (assignmentId.HasValue && a.Id == assignmentId.Value) || (a.CaseId == caseId && a.IsActive));
 
-        // Determine target firm for email before removing assignment
-        var unassignedFirm = assignment?.AssignedLawFirm ?? legalCase.LawFirm;
-
-        // 3. Remove the assignment record
         if (assignment != null)
         {
-            _context.CaseAssignments.Remove(assignment);
+            assignment.IsActive = false; // Mark inactive instead of hard deleting to preserve historical records
         }
 
-        // 4. Clear LawFirm link on Case entity
+        var unassignedFirm = assignment?.AssignedLawFirm ?? legalCase.LawFirm;
+
+        // Reset Case External LawFirm Link
         legalCase.LawFirmId = null;
         legalCase.LawFirm = null;
 
         await _context.SaveChangesAsync();
 
-        // 5. Send notification email using the 'reason' parameter from the view modal
+        // Dispatch recall email if it was previously assigned to an external firm
         if (unassignedFirm != null && !string.IsNullOrEmpty(unassignedFirm.Email))
         {
-            string subject = $"Case Recall Notification: {legalCase.Title}";
-            string body = $@"
-            <h3>Case Unassignment Notification</h3>
-            <p>Dear {unassignedFirm.Name},</p>
-            <p>Please be informed that legal case <strong>{legalCase.Title}</strong> has been unassigned/recalled by Bank of Uganda Legal Department.</p>
-            <p><strong>Reason / Remarks:</strong> {reason ?? "No additional remarks provided."}</p>
-            <p>This case will no longer appear on your firm's portal dashboard.</p>";
+            try
+            {
+                string subject = $"Case Recall Notification: {legalCase.Title}";
+                string body = $@"
+                <h3>Case Unassignment Notification</h3>
+                <p>Dear {unassignedFirm.Name},</p>
+                <p>Please be informed that legal case <strong>{legalCase.Title}</strong> has been unassigned/recalled by Bank of Uganda Legal Department.</p>
+                <p><strong>Reason / Remarks:</strong> {reason ?? "No additional remarks provided."}</p>
+                <p>This case will no longer appear on your firm's portal dashboard.</p>";
 
-            await _emailService.SendEmailAsync(unassignedFirm.Email, subject, body);
+                await _emailService.SendEmailAsync(unassignedFirm.Email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send recall email to law firm {LawFirmId}", unassignedFirm.Id);
+            }
         }
 
-        TempData["Success"] = "Case successfully unassigned from the law firm.";
+        TempData["Success"] = "Case assignment successfully revoked.";
         return RedirectToAction("Details", new { id = caseId });
     }
 
-
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> SendInstruction(int caseId, int assignmentId, string instructionsText)
     {
         if (string.IsNullOrWhiteSpace(instructionsText))
@@ -498,7 +551,7 @@ public class CaseController(
 
     [HttpGet]
     [Breadcrumb("Create New Case", FromAction = nameof(Index))]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> Create()
     {
         var model = new CreateCaseViewModel
@@ -512,7 +565,7 @@ public class CaseController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> Create(CreateCaseViewModel model)
     {
         if (!ModelState.IsValid)
@@ -545,7 +598,7 @@ public class CaseController(
 
     [HttpGet]
     [Breadcrumb("Edit Case", FromAction = nameof(Index))]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> Edit(int id)
     {
         var caseEntity = await _caseRepo.FindById(id);
@@ -571,7 +624,7 @@ public class CaseController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> Edit(int id, EditCaseViewModel model)
     {
         if (id != model.Id)
@@ -611,7 +664,7 @@ public class CaseController(
 
     [HttpGet]
     [Breadcrumb("Delete Case", FromAction = nameof(Index))]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> Delete(int id)
     {
         var caseEntity = await _caseRepo.FindById(id);
@@ -627,7 +680,7 @@ public class CaseController(
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = RoleConstants.LegalStaff)]
+    [Authorize(Roles = RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var caseEntity = await _caseRepo.FindById(id);
@@ -647,7 +700,7 @@ public class CaseController(
 
     // POST: Case/Archive
     [HttpPost]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> ArchiveCase(int caseId)
     {
         var caseEntity = await _context.Cases
@@ -656,7 +709,6 @@ public class CaseController(
 
         if (caseEntity == null) return NotFound();
 
-        // Fetch the "Closed" status entity from database
         var closedStatus = await _context.CaseStatuses
             .FirstOrDefaultAsync(s => s.Name == "Closed");
 
@@ -665,7 +717,6 @@ public class CaseController(
             caseEntity.StatusId = closedStatus.Id;
         }
 
-        // Set archival properties
         caseEntity.IsArchived = true;
         caseEntity.ArchivedDate = DateTime.UtcNow;
 
@@ -677,14 +728,13 @@ public class CaseController(
 
     // POST: Case/Unarchive
     [HttpPost]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> UnarchiveCase(int caseId)
     {
         var caseEntity = await _context.Cases.FindAsync(caseId);
 
         if (caseEntity == null) return NotFound();
 
-        // Optionally reset status back to Active upon retrieval
         var activeStatus = await _context.CaseStatuses
             .FirstOrDefaultAsync(s => s.Name == "Active");
 
@@ -704,7 +754,7 @@ public class CaseController(
 
     // GET: Case/Archives
     [HttpGet]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> Archives(string? searchTerm)
     {
         var query = _context.Cases
@@ -736,7 +786,7 @@ public class CaseController(
     // POST: Case/AddPayment
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> AddPayment(int caseId, int paymentMilestoneId, decimal amount, string? description)
     {
         if (amount <= 0)
@@ -764,7 +814,7 @@ public class CaseController(
     // POST: Case/AddFinancialProvision
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> AddFinancialProvision(int caseId, string financialYear, decimal amount, string? justification)
     {
         if (amount <= 0 || string.IsNullOrWhiteSpace(financialYear))
@@ -793,7 +843,7 @@ public class CaseController(
     // POST: Case/ScheduleHearing
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin," + RoleConstants.LegalStaff)]
+    [Authorize(Roles = "Admin," + RoleConstants.LegalStaffAdmin + "," + RoleConstants.LegalStaff)]
     public async Task<IActionResult> ScheduleHearing(int caseId, DateTime hearingDate, string courtLocation, string judgeOrMagistrate, string? purpose)
     {
         if (hearingDate < DateTime.UtcNow.Date)
@@ -841,5 +891,32 @@ public class CaseController(
             .ToListAsync();
     }
 
+    [HttpGet]
+    [Authorize(Roles = RoleConstants.LawFirm)]
+    public async Task<IActionResult> AssignedCases()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+        // Load the logged-in counsel user to retrieve their LawFirmId
+        var currentUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id.ToString() == userIdStr);
+
+        if (currentUser?.LawFirmId == null)
+        {
+            return Forbid();
+        }
+
+        // Mirror the exact query used in Dashboard()
+        var assignedCases = await _context.CaseAssignments
+            .Include(a => a.Case)
+                .ThenInclude(c => c.Status)
+            .Include(a => a.Case)
+                .ThenInclude(c => c.Type)
+            .Include(a => a.Instructions)
+            .Where(a => a.AssignedLawFirmId == currentUser.LawFirmId)
+            .OrderByDescending(a => a.AssignedDate)
+            .ToListAsync();
+
+        return View(assignedCases);
+    }
 }

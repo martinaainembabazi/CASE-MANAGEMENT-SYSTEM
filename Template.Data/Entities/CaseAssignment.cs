@@ -9,6 +9,10 @@ namespace Template.Data.Entities
         public int CaseId { get; set; }
         public Case Case { get; set; } = null!;
 
+        // Foreign Key to your AssignmentType Entity
+        public int AssignmentTypeId { get; set; }
+        public AssignmentType AssignmentType { get; set; } 
+
         public Guid? AssignedUserId { get; set; }
         public ApplicationUser? AssignedUser { get; set; }
 
